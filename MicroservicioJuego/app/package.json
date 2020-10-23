@@ -1,0 +1,22 @@
+{
+  "name": "proyectosa-2020",
+  "version": "1.0.0",
+  "author": "Christian Gonzalez",
+  "license": "ISC",
+  "description": "Proyecto SA 2SEM 2020",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CRISLEV/p1sa-gameserver.git"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "express": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
