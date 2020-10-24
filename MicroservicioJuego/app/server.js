@@ -14,6 +14,9 @@ var app = express();
 var juego = [];
 var jugadores = [];
 var maximacasilla = 0;
+var ganador ="";
+var punteoMaximo = 0;
+var turno = 0;
 
 var casilla = {
     numero: 0,
@@ -35,7 +38,7 @@ var tiro = {
 //SERVER START...............................................................
 app.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
-  init_new_game()
+  init_new_game();
 });
 
 //API.................................................................
@@ -95,9 +98,12 @@ app.post('/simulate', (req, res) =>{
 app.post('/getInfo', (req, res) =>{
     console.log("Obteniendo informacion...");
     const body = req.body;
-    
+
     var respuesta = {
-        players : jugadores
+        players : jugadores,
+        ganador : ganador,
+        punteoMaximo : punteoMaximo,
+        turno : turno
     }
     res.statusCode = 200;
     res.json(respuesta);
@@ -113,6 +119,7 @@ async function gameSimulation(){
     //for(var i = 0; i < 10 ; i++){
         await sleep(500);
         console.log("TURNO #"+i+".................................!");
+        turno = i;
         for(j in jugadores){
             jugador = jugadores[j];
             console.log(jugador);
@@ -135,6 +142,15 @@ async function gameSimulation(){
         console.log(jugadores[jfinal]);
     }
     console.log("Maxima casilla: "+maximacasilla);
+    
+    punteoMaximo = 0;
+    for (let i = 0; i<jugadores.length; i++){
+        if (jugadores[i].punteo > punteoMaximo){
+            punteoMaximo = jugadores[i].punteo;
+            ganador = jugadores[i].nombre;
+        }
+    }
+    console.log("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
 }
 
 function sleep(ms) {
@@ -202,7 +218,10 @@ function init_new_game(){
     juego = [];
     jugadores = [];
     maximacasilla = 0;
+    ganador ="";
+    punteoMaximo = 0;
     console.log(jugador);
+    turno = 0;
 
     casilla = {
         numero: 0,
@@ -342,6 +361,4 @@ function init_new_game(){
     casilla.tipo="A"; casilla.numero=118; casilla.tipo_valor = 1; new_casilla = Object.assign({}, casilla); juego.push(new_casilla);
     casilla.tipo="B"; casilla.numero=119; casilla.tipo_valor = 0; new_casilla = Object.assign({}, casilla); juego.push(new_casilla);
     casilla.tipo="A"; casilla.numero=120; casilla.tipo_valor = 4; new_casilla = Object.assign({}, casilla); juego.push(new_casilla);
-
-    //console.log(juego);
 }

@@ -13,6 +13,8 @@ export class AppComponent implements OnInit{
   dataSource = ELEMENT_DATA;
   contacts: any[] = [];
   contactName:any ;
+  ganador = "";
+  turno = 0;
 
   constructor(
     protected contactService: ContactsService,
@@ -20,7 +22,7 @@ export class AppComponent implements OnInit{
   ) {}
 
   ngOnInit() {
-    this.lstContactsAuth();
+    //this.lstContacts();
   }
 
   refresh() {
@@ -29,26 +31,23 @@ export class AppComponent implements OnInit{
     this.changeDetectorRefs.detectChanges();
   }
 
-  lstContacts(){
-    console.log("geting auth...");
-    this.contactService.getAuth_oAuth2()
-    .subscribe(
-      data => {// Success
-        console.log("response to auth:");
-        console.log(data);
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async lstContacts(){
+    while (this.ganador == ""){
+        await this.sleep(500);
         this.lstContactsAuth();
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
+        console.log(">"+this.ganador);
+    }
   }
 
   lstContactsAuth(){
     this.contactService.getPlayers()
     .subscribe(
       (data) => {
-        console.log(data);
+        //console.log(data);
         this.contacts = data['players'];
         ELEMENT_DATA = [];
         for (let i = 0; i < this.contacts.length; i++) {
@@ -61,8 +60,12 @@ export class AppComponent implements OnInit{
           });
         }
         this.dataSource = ELEMENT_DATA;
-        console.log(this.dataSource);
-        this.refresh();
+        if (data['ganador'] != ""){
+          this.ganador = "El ganador del juego es "+data['ganador']+" con un total de "+data['punteoMaximo']+" puntos!";
+        }
+        this.turno = data['turno'];
+        //console.log(this.dataSource);
+        //this.refresh();
       },
       (error) => {
         console.error(error);
@@ -76,6 +79,19 @@ export class AppComponent implements OnInit{
 
   actionNewSim(){
     console.log("Simulation...");
+    this.newGameSimulation();
+    this.lstContacts();
+  }
+
+  newGameSimulation(){
+    this.ganador = "";
+    this.turno = 0;
+    this.contactService.newSimulation()
+    .subscribe(
+      (data) => {
+        console.log("Simulation complete!");
+      }
+    );
   }
 
 }

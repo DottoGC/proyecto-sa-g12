@@ -31,6 +31,12 @@ export class ContactsService {
     return this.http.post(url, {});
   }
 
+  newSimulation() {
+    let url = 'http://localhost:9000/simulate';
+    //Enviar arreglo de jugadores
+    return this.http.post(url, {});
+  }
+
   newContact(contactName, access_token){
     let callheaders: HttpHeaders = new HttpHeaders();
     console.log(access_token);

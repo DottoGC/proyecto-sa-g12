@@ -331,8 +331,10 @@
           <button mat-raised-button (click)="actionNewSim()">Nueva simulación</button>
           <tr>&nbsp;</tr>
           <mat-card-header>
-            <mat-card-title><b>Datos de Partida</b></mat-card-title>
+            <h1><b>Datos de Partida</b></h1>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<h1>Turno: {{turno}}</h1>
           </mat-card-header>
+          <h3><b>{{ganador}}</b></h3>
           <mat-card-content>
             <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
               <!-- Position Column -->
