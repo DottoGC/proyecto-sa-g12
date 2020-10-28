@@ -332,7 +332,6 @@
           <tr>&nbsp;</tr>
           <mat-card-header>
             <h1><b>Datos de Partida</b></h1>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<h1>Turno: {{turno}}</h1>
           </mat-card-header>
           <h3><b>{{ganador}}</b></h3>
           <mat-card-content>
@@ -363,6 +362,9 @@
               <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
             </mat-table>
           </mat-card-content>
+          <h1>Turno: {{turno}}</h1>
+          <tr>&nbsp;</tr>
+          <h1><b>{{jugadoractual}}</b></h1>
         </mat-card>
       </td>
       <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>

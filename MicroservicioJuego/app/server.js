@@ -8,6 +8,7 @@ const port = 9000;
 var express = require('express');
 const { Console } = require('console');
 const { randomInt } = require('crypto');
+const { bind } = require('lodash');
 var app = express();
 
 //Variables
@@ -17,6 +18,7 @@ var maximacasilla = 0;
 var ganador ="";
 var punteoMaximo = 0;
 var turno = 0;
+var jugadoractual ="";
 
 var casilla = {
     numero: 0,
@@ -103,7 +105,8 @@ app.post('/getInfo', (req, res) =>{
         players : jugadores,
         ganador : ganador,
         punteoMaximo : punteoMaximo,
-        turno : turno
+        turno : turno,
+        jugadoractual: jugadoractual
     }
     res.statusCode = 200;
     res.json(respuesta);
@@ -117,12 +120,14 @@ async function gameSimulation(){
     var i = 0
     while (maximacasilla < 120){i++;
     //for(var i = 0; i < 10 ; i++){
-        await sleep(500);
+        //await sleep(500);
         console.log("TURNO #"+i+".................................!");
         turno = i;
         for(j in jugadores){
+            await sleep(500);
             jugador = jugadores[j];
-            console.log(jugador);
+            jugadoractual = jugador.nombre;
+            //console.log(jugador);
             //tirar dado
             tirarDados();
             //bonificacion si es doble 6
@@ -159,9 +164,31 @@ function sleep(ms) {
 
 function tirarDados(){
     //Llamar a servicio tirar
-    //llenar datos de tiro
-    tiro.dadoa = Math.floor(Math.random() * 6) + 1;
-    tiro.dadob = Math.floor(Math.random() * 6) + 1;
+    var optionsget = {
+        host : '34.69.221.75',
+        path : '/tirar/2',
+        method : 'GET'
+    };
+
+    var reqGet = http.request(optionsget, function(res) {
+        //console.log("statusCode: ", res.statusCode);
+        res.on('data', function(d) {
+            //console.info('GET result:\n');
+            //process.stdout.write(d+'\n');
+            var dresponse = JSON.parse(d);
+            tiro.dadoa = dresponse.dados[0];
+            tiro.dadob = dresponse.dados[1];
+            //console.info('\n\nCall completed');
+        });
+     
+    }.bind(this));
+
+    reqGet.end();
+    reqGet.on('error', function(e) {
+        tiro.dadoa = Math.floor(Math.random() * 6) + 1;
+        tiro.dadob = Math.floor(Math.random() * 6) + 1;
+        console.error(e);
+    }.bind(this));
 }
 
 function verificaDobleSeis(){
@@ -222,6 +249,7 @@ function init_new_game(){
     punteoMaximo = 0;
     console.log(jugador);
     turno = 0;
+    jugadoractual ="";
 
     casilla = {
         numero: 0,

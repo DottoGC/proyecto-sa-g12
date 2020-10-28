@@ -15,6 +15,7 @@ export class AppComponent implements OnInit{
   contactName:any ;
   ganador = "";
   turno = 0;
+  jugadoractual = "";
 
   constructor(
     protected contactService: ContactsService,
@@ -64,6 +65,7 @@ export class AppComponent implements OnInit{
           this.ganador = "El ganador del juego es "+data['ganador']+" con un total de "+data['punteoMaximo']+" puntos!";
         }
         this.turno = data['turno'];
+        this.jugadoractual = data['jugadoractual'];
         //console.log(this.dataSource);
         //this.refresh();
       },
