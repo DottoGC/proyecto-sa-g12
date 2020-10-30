@@ -328,7 +328,8 @@
       <td width="500">
         <mat-card class="example-card">
           <button mat-raised-button (click)="actionNewGame()">Nueva partida</button> &nbsp;&nbsp;&nbsp;
-          <button mat-raised-button (click)="actionNewSim()">Nueva simulación</button>
+          <button mat-raised-button (click)="actionNewSim()">Simular partida</button> &nbsp;&nbsp;&nbsp;
+          <button mat-raised-button (click)="actionNewFullSim()">Nueva simulación</button>
           <tr>&nbsp;</tr>
           <mat-card-header>
             <h1><b>Datos de Partida</b></h1>
@@ -364,7 +365,7 @@
           </mat-card-content>
           <h1>Turno: {{turno}}</h1>
           <tr>&nbsp;</tr>
-          <h1><b>{{jugadoractual}}</b></h1>
+          <h1><b>{{jugadoractual}}</b></h1><button mat-raised-button (click)="actionPlay()">TIRAR DADOS</button>
         </mat-card>
       </td>
       <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
