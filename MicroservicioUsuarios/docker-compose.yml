@@ -1,0 +1,27 @@
+version: "3.3"
+
+services:    
+    db-mysql:
+        container_name: db-mysql
+        image: mysql:5.7
+        restart: always
+        ports:
+          - 3307:3306 
+        environment:
+            - MYSQL_DATABASE=usuarios_bd
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_USER=root
+            - MYSQL_PASSWORD=root
+
+    userserver_sa:
+        container_name: userserver_sa        
+        build: .
+        restart: always
+        ports:
+            - "5000:3000"
+        volumes:
+            - type: bind 
+              source: ./src
+              target: /usr/src/app/src
+
+        

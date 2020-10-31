@@ -1,0 +1,9 @@
+FROM node:current-slim
+WORKDIR /usr/src/app
+RUN node -v
+RUN npm -v
+COPY package.json . 
+RUN npm install --save
+RUN npm install mysql --save
+RUN npm install body-parser --save
+CMD ["npm","run", "start"]
