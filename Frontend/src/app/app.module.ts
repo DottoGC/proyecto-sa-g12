@@ -8,8 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule} from '@angular/common/http';
-import { ContactsService } from './contacts.service';
+import { GameService } from './game.service';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -23,9 +24,10 @@ import { FormsModule } from '@angular/forms';
     MatButtonModule,
     MatTableModule,
     HttpClientModule,
-    FormsModule
+    FormsModule,
+    MatIconModule
   ],
-  providers: [ContactsService],
+  providers: [GameService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
