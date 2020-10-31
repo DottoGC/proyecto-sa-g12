@@ -119,14 +119,37 @@ app.post('/fullsimulate', (req, res) =>{
 app.post('/tirar', (req, res) =>{
     console.log("Tirando...");
     //const body = req.body;
+    funcionTirar();
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.send("Tiro hecho!");
+    res.end();
+})
 
+app.post('/getInfo', (req, res) =>{
+    console.log("Obteniendo informacion...");
+    const body = req.body;
+
+    var respuesta = {
+        players : jugadores,
+        ganador : ganador,
+        punteoMaximo : punteoMaximo,
+        turno : turno,
+        jugadoractual: jugadoractual
+    }
+    res.statusCode = 200;
+    res.json(respuesta);
+    res.end();
+});
+
+//FUNCTIONS AND METHODS
+
+async function funcionTirar(){
     if (!finjuego){
         //tirar dado
         tirarDados();
         //bonificacion si es doble 6
-        verificaDobleSeis();
-        //avanar casilla
-        avanzarCasillas();
+        await sleep(1000);
         //bonificacion si es ultima casilla
         ultima=verificaUltimaCasilla();
         console.log(jugador);
@@ -147,40 +170,14 @@ app.post('/tirar', (req, res) =>{
                 }
             }
             console.log("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/plain');
-            res.send("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
-            res.end();
         }
         else{
             //set proximo turno
             setNextTurn();
-
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/plain');
-            res.send("Tiro hecho!");
-            res.end();
         }
     }
-})
 
-app.post('/getInfo', (req, res) =>{
-    console.log("Obteniendo informacion...");
-    const body = req.body;
-
-    var respuesta = {
-        players : jugadores,
-        ganador : ganador,
-        punteoMaximo : punteoMaximo,
-        turno : turno,
-        jugadoractual: jugadoractual
-    }
-    res.statusCode = 200;
-    res.json(respuesta);
-    res.end();
-});
-
-//FUNCTIONS AND METHODS
+}
 async function gameFullSimulation(){
     console.log("let the simulation begin!");    
     console.log(jugadores);
@@ -198,10 +195,9 @@ async function gameFullSimulation(){
             console.log(" - Turno "+i+"........"+jugador);
             //tirar dado
             tirarDados();
-            //bonificacion si es doble 6
-            verificaDobleSeis();
-            //avanar casilla
-            avanzarCasillas();
+
+            await sleep(1000);
+            
             //bonificacion si es ultima casilla
             ultima=verificaUltimaCasilla();
             //console.log(jugador);
@@ -240,12 +236,12 @@ async function gameSimulation(){
             //console.log(jugador);
             //tirar dado
             tirarDados();
-            //bonificacion si es doble 6
-            verificaDobleSeis();
-            //avanar casilla
-            avanzarCasillas();
+
+            await sleep(1000);
             //bonificacion si es ultima casilla
             ultima=verificaUltimaCasilla();
+
+
             //console.log(jugador);
             if (ultima){
                 finjuego = true;
@@ -289,58 +285,89 @@ function setNextTurn(){
     }
 }
 
-function tirarDados(){
+async function tirarDados(){
     //Llamar a servicio tirar
-    console.log("->>>>>>  Consumiendo servicio de dados -> GET -> 34.69.221.75/tirar/2")
-    let objAuth = {'grant_type': 'client_credentials',
-                   'client_id': 'micro-juegos',
-                   'client_secret': 'secret-juegos-micro'};
-    let newContactstr = 'https://ip/getToken';
-    
-    var optionsget = {
+    let objAuth = {'Authorization': 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8='};
+    var optionsAuth = {
         host : '34.69.221.75',
-        path : '/tirar/2',
-        method : 'GET'
+        path : '/getToken',
+        method : 'POST',
+        headers: objAuth
     };
+    var bearerToken = "";
 
-    var reqGet = http.request(optionsget, function(res) {
+    console.log("->>>>>>  Consumiendo servicio de dados -> POST -> 34.69.221.75/getToken")
+    var reqAuth = http.request(optionsAuth, function(res) {
         //console.log("statusCode: ", res.statusCode);
         res.on('data', function(d) {
-            console.info('GET result:'+d+'\n');
-            //process.stdout.write(d+'\n');
+            //console.info('POST result:'+d+'\n');
+            process.stdout.write(d+'\n');
+            var data = JSON.parse(d);
+            bearerToken = data.token;
+        });
+     
+    }.bind(this));
+    reqAuth.end();
+    
+    await sleep(200);
+
+    console.log("token recibido....->"+bearerToken);
+
+    objAuth = {'Authorization': 'Bearer '+bearerToken};
+    var optionsdados = {
+        host : '34.69.221.75',
+        path : '/tirar/2',
+        method : 'POST',
+        headers: objAuth
+    };
+
+    console.log("->>>>>>  Consumiendo servicio de dados -> POST -> 34.69.221.75/tirar/2")
+    var reqDados = http.request(optionsdados, function(res) {
+        //console.log("statusCode: ", res.statusCode);
+        res.on('data', function(d) {
+            //console.info('GET result:'+d+'\n');
+            process.stdout.write(d+'\n');
             var dresponse = JSON.parse(d);
-            tiro.dadoa = dresponse.dados[0];
-            tiro.dadob = dresponse.dados[1];
+            //console.log(dresponse);
+            try{
+                tiro.dadoa = dresponse.respuesta.dados[0];
+                tiro.dadob = dresponse.respuesta.dados[1];
+            }
+            catch(e){
+                tiro.dadoa = dresponse.dados[0];
+                tiro.dadob = dresponse.dados[1];
+            }
             //console.info('\n\nCall completed');
         });
      
     }.bind(this));
 
-    reqGet.end();
-    reqGet.on('error', function(e) {
+    reqDados.end();
+    reqDados.on('error', function(e) {
         tiro.dadoa = Math.floor(Math.random() * 6) + 1;
         tiro.dadob = Math.floor(Math.random() * 6) + 1;
         console.error(e);
     }.bind(this));
+
+    await sleep(200);
+    //bonificacion si es doble 6
+    verificaDobleSeis();
 }
 
-function verificaDobleSeis(){
+async function verificaDobleSeis(){
+    console.log("verificando doble seis...");
     if (tiro.dadoa == 6 && tiro.dadob == 6){
         jugador.punteo = jugador.punteo + 10;
         console.log("DOBLE SEIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
-}
-
-function verificaUltimaCasilla(){
-    if (jugador.casilla >= 120){
-        jugador.punteo = jugador.punteo + 10;
-        console.log("ULTIMA CASILLA >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-        return true;
-    }
-    return false
+     await sleep(200);
+     //avanar casilla
+     avanzarCasillas();
 }
 
 function avanzarCasillas(){
+    console.log("avanzando casillas...");
+    console.log(jugador);
     jugador.casilla = jugador.casilla + tiro.dadoa + tiro.dadob;
     casilla = obtenerCasilla(jugador.casilla);
     if (casilla != null){
@@ -362,7 +389,16 @@ function avanzarCasillas(){
     if (jugador.casilla > maximacasilla){
         maximacasilla = jugador.casilla;
     }
-    
+
+}
+
+function verificaUltimaCasilla(){
+    if (jugador.casilla >= 120){
+        jugador.punteo = jugador.punteo + 10;
+        console.log("ULTIMA CASILLA >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        return true;
+    }
+    return false
 }
 
 function obtenerCasilla(numCasilla) {
