@@ -32,7 +32,7 @@ proyectobd.all = () => {
 
 proyectobd.one = (id) => {
     return new Promise((resolve, reject) => {
-        pool.query(`SELECT * FROM torneo WHERE idtorneo= ?`, [id], (err,results) =>{
+        pool.query(`SELECT * FROM torneo,partida,llave WHERE torneo.idtorneo= ? AND  partida.idpartida=llave.idpartida AND partida.idtorneo=torneo.idtorneo`, [id], (err,results) =>{
             if(err){
                 return reject(err);
             }
@@ -51,6 +51,7 @@ proyectobd.borrar = (id) => {
     });
 };
 
+
 proyectobd.insertar = (nombre,llaves,url,idjuego) => {
     
         
@@ -65,4 +66,48 @@ proyectobd.insertar = (nombre,llaves,url,idjuego) => {
     
 };
 
+proyectobd.insertarPartida = (idtorneo) => {
+    
+        
+    return new Promise((resolve, reject) => {
+        const query = "INSERT INTO partida(idtorneo) VALUES (" + idtorneo + ");";
+        con.query(query, (err, res) => {
+        if (err) throw err;           
+        console.log("insertar partida"+res.insertId)
+        resolve(res.insertId);
+        
+        });
+    });
+
+
+};
+proyectobd.insertarLlave= (idusuario1,idusuario2,idpartida) => {
+    
+    console.log("esto trae partida"+idpartida);    
+    return new Promise((resolve, reject) => {
+        const query = "INSERT INTO llave(idusuario1,idusuario2,punteo1,punteo2,idpartida) VALUES (" + idusuario1 + ","+ idusuario2 +",0,0,"+ idpartida +");";
+        con.query(query, (err, res) => {
+        if (err) throw err;           
+        
+        resolve(res.insertId);
+        });
+    });
+
+
+};
+
+proyectobd.controlTorneo= (id1,id2,id3) => {
+    
+    console.log("esto trae id1 "+id1+"id2 "+id2+"id3 "+id3);    
+    return new Promise((resolve, reject) => {
+        const query = "INSERT INTO controltorneo(idpartida1,idpartida2,idpartida3) VALUES (" + id1 + ","+ id2 +","+ id3 +");";
+        con.query(query, (err, res) => {
+        if (err) throw err;           
+        
+        resolve(res.insertId);
+        });
+    });
+
+
+};
 module.exports = proyectobd;
