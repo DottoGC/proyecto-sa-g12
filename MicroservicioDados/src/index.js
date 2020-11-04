@@ -1,16 +1,25 @@
 
 var express = require('express');
-var addRequestId = require('express-request-id')();
+const path = require('path');
+const fs = require('fs');
+
 var jwt=require('jsonwebtoken')
 
 var app = express();
-app.use(addRequestId);
-
 
 var microservicio_juegos = {
     cliente_id: 'micro-juegos',
     cliente_secret: 'secret-juegos-micro'
-   };
+};
+
+//TODO ESTO ES PARA DESENCRIPTAR TOKENS QUE SOLICITAN CONSUMIR TUS SERVICIOS DE TU MICROSERVICIO
+var publicKey = fs.readFileSync('./public.key','utf8');
+var verifyOptions = {
+    algorithms: ["RS256"],
+    maxAge: "60s"    
+};
+
+
 
 
 let respuesta = {
@@ -26,38 +35,6 @@ app.get('/', function (req, res) {
 });
 
 
-app.post('/getToken', function (req, res) {
-
-    var userpass = new Buffer((req.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
-
-    if (userpass !== (microservicio_juegos.cliente_id+':'+microservicio_juegos.cliente_secret)) {
-        res.writeHead(401, { 'Basic-Authenticate': 'Basic realm="nope"' });
-        res.end('HTTP Error 401 Unauthorized: Access is denied');
-        return;
-    }
-
-    //console.log(userpass);
-    //console.log(req.body.client_secret);
-    //console.log(req.header.grant_type);
-
-    /*repartidorRestaurante = {
-        pedido: req.body.pedido,
-        cliente: req.body.cliente,
-        direccion: req.body.direccion,
-    };*/
-
-    jwt.sign({user: microservicio_juegos}, microservicio_juegos.cliente_secret, {expiresIn:'30s'},(err,token)=>{
-        res.json({
-            token: token,
-            
-        })
-    });
-
-});
-
-
-
-
 function getRandomInt() {
     return Math.floor(Math.random() * (7 - 1)) + 1;
 }
@@ -66,13 +43,16 @@ function getRandomInt() {
 app.route('/tirar/:id')
     .post(verifytoken,function (req, res) {
 
-        jwt.verify(req.token,microservicio_juegos.cliente_secret,(err,authData)=>{
+        jwt.verify(req.token,publicKey,verifyOptions,(err)=>{
             if(err){
                 respuesta.error=true
                 respuesta.codigo=403
+                respuesta.datos=-1
+                respuesta.cantidad=-1
                 //res.sendStatus(403);
                 res.send(respuesta);
             }else{
+                var decoded = jwt.decode(req.token, {complete: true});
 
                 var numDados=parseInt(req.params.id)
                 console.log('Tirando '+numDados+' dados...');
@@ -82,7 +62,7 @@ app.route('/tirar/:id')
                     cadena.push(getRandomInt())
                 }    
                 
-                respuesta.cantidad= false//Numero de dados
+                respuesta.error= false//Numero de dados
                 respuesta.codigo= 200//Numero de dados
                 respuesta.cantidad= numDados//Numero de dados
                 respuesta.dados= cadena//Suma de puntos entre los N dados                
@@ -90,10 +70,10 @@ app.route('/tirar/:id')
                 //res.send(respuesta);
 
                 res.json({
+                    header: decoded.header,
+                    payload: decoded.payload,
                     mensaje: "post fue recibido",
-                    dados: req.params.id,
                     respuesta,
-                    authData: authData,
                 });
 
 
@@ -120,6 +100,7 @@ app.route('/tirar/:id')
         res.send(respuesta);*/
     })
 
+
 // Authorization: Bearer <token>
 function verifytoken(req,res,next){
     const bearerHeader=req.headers['authorization'];
@@ -131,10 +112,9 @@ function verifytoken(req,res,next){
     }else{
         res.sendStatus(403) //ruta o acceso prohibido
     }
-
 }
 
 
-app.listen(8080, function () {
-  console.log('Microservice \'Dados\' listening on port 8080!');
+app.listen(8088, function () {
+  console.log('Microservice \'Dados\' listening on port 8088!');
 });
