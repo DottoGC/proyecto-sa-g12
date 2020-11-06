@@ -2,18 +2,12 @@ version: "3"
 
 services:
   webserver:
-    image: node:10
+    image: crislev/saimg:microjuegos
     container_name: gameserver
-    volumes: 
-    - .:/home/app
-    working_dir: /home/app
     depends_on:
       - db
     ports:
       - "3000:3000"
-    command: >
-      bash -c "npm install -g nodemon 
-      && nodemon app/server.js"
 
   db:
     image: mysql:5.7

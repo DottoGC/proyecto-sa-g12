@@ -38,6 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var express = require('express');
 var db = require('../db/index');
+
 var axios = require('axios');
 var bodyParser = require('body-parser');
 var router = express.Router();
@@ -53,6 +54,10 @@ var verifyOptions = {
     maxAge: "60s"
 };
 // ------------ listas--------------
+
+var bodyParser = require('body-parser');
+var router = express.Router();
+
 router.get('/listaTorneos', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var results, e_1;
     return __generator(this, function (_a) {
@@ -73,6 +78,7 @@ router.get('/listaTorneos', function (req, res, next) { return __awaiter(void 0,
         }
     });
 }); });
+
 router.post('/listaUsers', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var llave;
     return __generator(this, function (_a) {
@@ -178,6 +184,7 @@ router.put('/partidas2/:id', verifytoken, function (req, res, next) { return __a
         return [2 /*return*/];
     });
 }); });
+
 router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var results, e_2;
     return __generator(this, function (_a) {
@@ -199,6 +206,7 @@ router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, vo
         }
     });
 }); });
+
 //------------------delete torneo, users, juegos-------------------
 router.post('/deleteUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -222,6 +230,7 @@ router.post('/deleteJuego', function (req, res, next) { return __awaiter(void 0,
         return [2 /*return*/];
     });
 }); });
+
 router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var results, e_3;
     return __generator(this, function (_a) {
@@ -242,6 +251,7 @@ router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, vo
         }
     });
 }); });
+
 //-------------------------inserts torneo, users, juego-----------------
 router.post('/insertUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -312,6 +322,23 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                 console.log("cantidad jugadores: " + cantidadj);
                 return [4 /*yield*/, db.insertar(req.body.nombre, req.body.llave1, req.body.url, req.body.idjuego)];
             case 3:
+
+router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var jugadores, matriz, cantidadj, json, idtorneo, arreglopartidas, a, b, partidas, i, idpartida, llave, i, idpartida, llave, i, x, j, e_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                jugadores = req.body.jugadores;
+                matriz = new Array();
+                cantidadj = jugadores.length;
+                json = { 406: "error con comunicación a bd" };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 15, , 16]);
+                if (!(cantidadj % 2 == 0)) return [3 /*break*/, 14];
+                return [4 /*yield*/, db.insertar(req.body.nombre, req.body.llaves, req.body.url, req.body.idjuego)];
+            case 2:
+
                 idtorneo = _a.sent();
                 arreglopartidas = new Array();
                 jugadores.sort(function (a, b) {
@@ -320,13 +347,20 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                 a = -2, b = -1;
                 partidas = cantidadj / 2;
                 i = 0;
+
                 _a.label = 4;
             case 4:
                 if (!(i < partidas)) return [3 /*break*/, 8];
+
+                _a.label = 3;
+            case 3:
+                if (!(i < partidas)) return [3 /*break*/, 7];
+
                 a = a + 2;
                 b = b + 2;
                 console.log("------------torneo:" + idtorneo);
                 return [4 /*yield*/, db.insertarPartida(idtorneo)];
+
             case 5:
                 idpartida = _a.sent();
                 console.log("------------partida :" + idpartida);
@@ -366,6 +400,47 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                 matriz.push(arreglopartidas);
                 return [3 /*break*/, 9];
             case 15:
+
+            case 4:
+                idpartida = _a.sent();
+                console.log("------------partida :" + idpartida);
+                return [4 /*yield*/, db.insertarLlave(jugadores[a], jugadores[b], idpartida)];
+            case 5:
+                llave = _a.sent();
+                arreglopartidas.push(Number(idpartida));
+                _a.label = 6;
+            case 6:
+                i++;
+                return [3 /*break*/, 3];
+            case 7:
+                partidas = partidas / 2;
+                matriz.push(arreglopartidas);
+                _a.label = 8;
+            case 8:
+                if (!(partidas >= 1)) return [3 /*break*/, 14];
+                arreglopartidas = new Array();
+                i = 0;
+                _a.label = 9;
+            case 9:
+                if (!(i < partidas)) return [3 /*break*/, 13];
+                console.log("while idpartida:" + idpartida);
+                return [4 /*yield*/, db.insertarPartida(idtorneo)];
+            case 10:
+                idpartida = _a.sent();
+                return [4 /*yield*/, db.insertarLlave(6, 6, idpartida)];
+            case 11:
+                llave = _a.sent();
+                arreglopartidas.push(Number(idpartida));
+                _a.label = 12;
+            case 12:
+                i++;
+                return [3 /*break*/, 9];
+            case 13:
+                partidas = partidas / 2;
+                matriz.push(arreglopartidas);
+                return [3 /*break*/, 8];
+            case 14:
+
                 for (i = 1; i < matriz.length; i++) {
                     x = 0;
                     for (j = 0; j < matriz[i].length; j++) {
@@ -376,6 +451,7 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                 }
                 json = { "estado": 201, "torneo": idtorneo, "partidas": matriz };
                 res.json(json);
+
                 return [3 /*break*/, 17];
             case 16:
                 e_4 = _a.sent();
@@ -469,4 +545,16 @@ function verifytoken(req, res, next) {
         res.sendStatus(403); //ruta o acceso prohibido
     }
 }
+
+                return [3 /*break*/, 16];
+            case 15:
+                e_4 = _a.sent();
+                console.log(e_4);
+                res.sendStatus(500);
+                return [3 /*break*/, 16];
+            case 16: return [2 /*return*/];
+        }
+    });
+}); });
+
 module.exports = router;

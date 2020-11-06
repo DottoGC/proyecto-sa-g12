@@ -1,9 +1,12 @@
+
 import { AxiosError, AxiosResponse} from "axios";
+
 import { json } from "express";
 import { controlTorneo, insertarLlave, insertarPartida } from "../db";
 
 var express = require('express');
 var db = require('../db/index');
+
 var axios = require('axios');
 var bodyParser = require('body-parser');
 var router = express.Router();
@@ -24,6 +27,12 @@ var verifyOptions = {
 };
 
 // ------------ listas--------------
+
+var bodyParser = require('body-parser');
+var router = express.Router();
+
+
+
 router.get('/listaTorneos', async (req, res, next) => {
     try{
         let results = await db.all();
@@ -34,6 +43,7 @@ router.get('/listaTorneos', async (req, res, next) => {
         res.sendStatus(500);
     }
 });
+
 
 router.post('/listaUsers', async (req, res, next) => {
     
@@ -143,6 +153,7 @@ router.put('/partidas2/:id',verifytoken, async (req, res, next) => {
 });
 
 
+
 router.get('/getTorneo', async (req, res, next) => {
     try{
         console.log("esto trae el body get torneo "+req.body.idtorneo)
@@ -154,6 +165,7 @@ router.get('/getTorneo', async (req, res, next) => {
         res.sendStatus(500);
     }
 });
+
 
 //------------------delete torneo, users, juegos-------------------
 router.post('/deleteUser', async (req, res, next) => {
@@ -178,6 +190,7 @@ router.post('/deleteJuego', async (req, res, next) => {
     
     
 });
+
 router.delete('/:id', async (req, res, next) => {
     try{
         let results = await db.borrar(req.params.id);
@@ -261,6 +274,17 @@ router.post('/insertarTorneo', async (req, res, next) => {
             console.log("entro al if");
             console.log("cantidad jugadores: "+cantidadj);
             var idtorneo:any = await db.insertar(req.body.nombre, req.body.llave1, req.body.url,req.body.idjuego);
+
+router.post('/insertarTorneo', async (req, res, next) => {
+    var jugadores: Array<number> = req.body.jugadores;
+    var matriz: Array<Array<number>> = new Array<Array<number>>();
+    var cantidadj = jugadores.length;
+    var json : any = {406:"error con comunicación a bd"};
+    try{
+        if (cantidadj % 2 == 0){
+            
+            var idtorneo:any = await db.insertar(req.body.nombre, req.body.llaves, req.body.url,req.body.idjuego);
+
             var arreglopartidas: Array<number> = new Array<number>();
             jugadores.sort(function(a,b){
                 return (Math.random()-0.5)
@@ -286,7 +310,9 @@ router.post('/insertarTorneo', async (req, res, next) => {
                 for(var i = 0; i < partidas; i++){
                     console.log("while idpartida:"+idpartida);
                     var idpartida: any = await db.insertarPartida(idtorneo);
+
                     var llave: any = await db.insertarLlave(0,0,idpartida);
+
                     arreglopartidas.push(Number(idpartida));
                 }
                 partidas = partidas /2 ;
@@ -383,4 +409,6 @@ function verifytoken(req,res,next){
         res.sendStatus(403) //ruta o acceso prohibido
     }
 }
+
+
 module.exports = router
