@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  webserver:
+    image: crislev/saimg:frontend
+    container_name: gamefrontend
+    ports:
+      - "4200:4200"
