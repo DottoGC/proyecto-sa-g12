@@ -1,3 +1,4 @@
+var axios = require('axios');
 const mysql = require('mysql');
 
 const pool = mysql.createPool({
@@ -29,6 +30,8 @@ proyectobd.all = () => {
         });
     });
 };
+
+
 
 proyectobd.one = (id) => {
     return new Promise((resolve, reject) => {
@@ -85,7 +88,9 @@ proyectobd.insertarLlave= (idusuario1,idusuario2,idpartida) => {
     
     console.log("esto trae partida"+idpartida);    
     return new Promise((resolve, reject) => {
-        const query = "INSERT INTO llave(idusuario1,idusuario2,punteo1,punteo2,idpartida) VALUES (" + idusuario1 + ","+ idusuario2 +",0,0,"+ idpartida +");";
+
+        const query = "INSERT INTO llave2(idusuario1,idusuario2,punteo1,punteo2,idpartida) VALUES (" + idusuario1 + ","+ idusuario2 +",0,0,"+ idpartida +");";
+
         con.query(query, (err, res) => {
         if (err) throw err;           
         
@@ -95,6 +100,87 @@ proyectobd.insertarLlave= (idusuario1,idusuario2,idpartida) => {
 
 
 };
+
+proyectobd.setPunteo= (idpartida,punteo1,punteo2) => {
+    
+    console.log("setpunteo "+idpartida+" "+punteo1+" "+punteo2);    
+    const query = "UPDATE llave SET punteo1="+punteo1+", punteo2="+punteo2+" WHERE idpartida="+idpartida+";" 
+    con.query(query, (err, res) => {
+        if (err) throw err;           
+        console.log("partida "+idpartida+" punteo actualizado");
+    });
+
+
+
+};
+
+proyectobd.getGanador= (idpartida,numero) => {
+    
+    console.log("esto trae getganador "+idpartida+"numero "+numero);    
+    
+    const query = "SELECT idusuario"+numero+" AS usuario from llave where idpartida="+idpartida+";"
+    con.query(query, (err, res) => {
+        if (err) throw err;           
+        if (res.length>0){
+            const ganador = res[0].usuario;
+            proyectobd.partidaSiguiente(idpartida,ganador);
+        }else{
+            console.log("get ganador error, no existe la partida o id del jugador ")
+        }
+
+
+    
+    });
+
+
+
+};
+
+
+proyectobd.refresh= (idpartida,ganador,local) => {
+    
+    console.log("esto trae idpartida refresh "+idpartida+"ganador "+ganador);    
+    var usuario = "idusuario2";
+    if(local==1){
+        usuario = "idusuario1";
+    }
+
+    const query = "update llave set "+usuario+"="+ganador+" where idpartida="+idpartida+";"
+    con.query(query, (err, res) => {
+        if (err) throw err;           
+        console.log("partida actualizada");
+    });
+    
+
+
+};
+
+
+proyectobd.partidaSiguiente= (idpartida,ganador) => {
+    
+    console.log("esto trae idpartida siguiente "+idpartida+"ganador "+ganador);    
+    
+    const query = "SELECT idpartida1 from controltorneo where idpartida2="+idpartida+";"
+    con.query(query, (err, res) => {
+        if (err) throw err;           
+        if (res.length>0){
+            console.log("entro al if");
+            proyectobd.refresh(res[0].idpartida1,ganador,1);
+        }else{
+            const query = "SELECT idpartida1 from controltorneo where idpartida3="+idpartida+";"
+            con.query(query, (err, res) => {
+                if (err) throw err;
+                if (res.length > 0){
+                    proyectobd.refresh(res[0].idpartida1,ganador,0);
+                }
+            });
+    
+        }
+    
+    });
+};
+
+
 
 proyectobd.controlTorneo= (id1,id2,id3) => {
     
@@ -109,5 +195,5 @@ proyectobd.controlTorneo= (id1,id2,id3) => {
     });
 
 
-};
+
 module.exports = proyectobd;
