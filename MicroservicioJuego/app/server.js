@@ -340,7 +340,7 @@ function llamarServicioAuth(callback) {
     let objAuth = {'Authorization': 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8='};
     var optionsAuth = {
         host : '35.232.54.106',
-        path : '/getToken',
+        path : '/token',
         method : 'POST',
         headers: objAuth
     };

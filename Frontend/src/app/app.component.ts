@@ -78,70 +78,107 @@ export class AppComponent implements OnInit{
     );
   }
 
-  async actionNewGame(){
+  actionNewGame(){
     console.log("New Game...");
-    this.newGameStart();
-    await this.sleep(500);
-    this.lstnewGameInfo();
+    this.newGameStart(function(){
+      this.lstnewGameInfo();
+    }.bind(this));
+
   }
 
-  async actionNewSim(){
+  actionNewSim(){
     console.log("Simulation...");
-    this.newGameSimulation();
-    await this.sleep(500);
-    this.lstGameInfo();
+    this.newGameSimulation(function(){
+      this.lstGameInfo();
+    }.bind(this));
   }
 
   async actionNewFullSim(){
     console.log("Full Simulation...");
-    this.newGameFullSimulation();
-    await this.sleep(500);
-    this.lstGameInfo();
+    this.newGameFullSimulation(function(){
+      this.lstGameInfo();
+    }.bind(this));
   }
 
   actionPlay(){
     console.log("Nuevo Tiro...");
-    this.newPlayerRun();
-    this.lstnewGameInfo();
+    this.newPlayerRun(function(){
+      this.lstnewGameInfo();
+    }.bind(this));
   }
 
-  newGameSimulation(){
+  newGameSimulation(callback){
     this.ganador = "";
     this.gameService.newSimulation()
     .subscribe(
-      (data) => {
+      result => {
+        console.log(result);
+      },
+      error => {
+        console.log(error);
+        return callback();
+      },
+      () => {
         console.log("Simulation complete!");
+        return callback();
       }
     );
   }
 
-  newGameFullSimulation(){
+  newGameFullSimulation(callback){
     this.ganador = "";
     this.turno = 0;
     this.gameService.newFullSimulation()
     .subscribe(
-      (data) => {
+      result => {
+        console.log(result);
+      },
+      error => {
+        console.log(error);
+        return callback();
+      },
+      () => {
         console.log("Full Simulation complete!");
+        return callback();
       }
     );
   }
 
-  newGameStart(){
+  newGameStart(callback){
+    console.log("New Game starting...");
     this.ganador = "";
     this.turno = 0;
     this.gameService.newGame()
     .subscribe(
-      (data) => {
+      result => {
+        console.log("resultado...");
+        console.log(result);
+      },
+      error => {
+        console.log("error...");
+        console.log(error);
+        return callback();
+      },
+      () => {
         console.log("New Game started!");
+        return callback();
       }
     );
   }
 
-  newPlayerRun(){
+  newPlayerRun(callback){
     this.gameService.newRun()
     .subscribe(
-      (data) => {
+      result => {
+        console.log(result);
+      },
+      error => {
+        console.log(error);
+        return callback();
+      },
+      () => {
         console.log("Tiro realizado!");
+        return callback();
       }
     );
   }
