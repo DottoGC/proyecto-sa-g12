@@ -2,6 +2,7 @@ const http = require('http');
 const _ = require('lodash');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+var cors = require('cors')
 //SERVER CONTANTS............................................................
 const hostname = '0.0.0.0';
 const port = 3000;
@@ -17,6 +18,7 @@ const { randomInt } = require('crypto');
 const { bind, stubString } = require('lodash');
 var app = express();
 app.use(express.json());
+app.use(cors())
 
 //Variables
 var juego = [];
@@ -156,7 +158,7 @@ app.post('/tirar', (req, res) =>{
 })
 
 app.post('/getInfo', (req, res) =>{
-    addLog("Obteniendo informacion...");
+    //addLog("Obteniendo informacion...");
     const body = req.body;
 
     var respuesta = {
@@ -240,13 +242,13 @@ function llamarServicioPartidas(marcador){
         json: true
     };
 
-    addLog("->>>>>>  Consumiendo servicio de Torneos -> PUT -> 34.69.221.75/tirar/"+idpartida)
+    addLog("->>>>>>  Consumiendo servicio de Torneos -> PUT -> "+ip_partidas+"/partidas/"+idpartida)
     addLog(JSON.stringify(postData));
     //return;
     var req = http.request(optionsService, function(res) {
         res.on('data', function(d) {
-            process.stdout.write(d+'\n');
-            var dresponse = JSON.parse(d);
+            //process.stdout.write(d+'\n');
+            //var dresponse = JSON.parse(d);
             addLog (">>>>>>>>>>>>>>>>>>>>>>Se reporto marcador: "+marcadordata)
         });
     }.bind(this));
@@ -397,14 +399,14 @@ function llamarServicioAuth(callback) {
         headers: objAuth
     };
     var bearerToken = "";
-    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> 35.232.54.106/getToken")
+    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> "+ip_tokens+"/getToken")
     var reqAuth = http.request(optionsAuth, function(res) {
         addLog("statusCode: "+ res.statusCode);
         res.on('data', function(d) {
             //console.info('POST result:'+d+'\n');
             //process.stdout.write(d+'\n');
             var data = JSON.parse(d);
-            bearerToken = data.token;
+            bearerToken = data.jwt;
             //addLog("token: "+bearerToken);
             return callback(bearerToken);
         });
@@ -421,7 +423,7 @@ function llamarServicioTirar(bearerToken,callback){
         headers: objAuth
     };
 
-    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> 34.69.221.75/tirar/2")
+    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> "+ip_dados+"/tirar/2")
     var reqDados = http.request(optionsdados, function(res) {
         //addLog("statusCode: ", res.statusCode);
         res.on('data', function(d) {
@@ -431,8 +433,8 @@ function llamarServicioTirar(bearerToken,callback){
             addLog (">>>>>>>>>>>>>>>>>>>>>>TIRO realizado!")
             //addLog(dresponse);
             try{
-                tiro.dadoa = dresponse.respuesta.dados[0];
-                tiro.dadob = dresponse.respuesta.dados[1];
+                tiro.dadoa = dresponse.payload.dados[0];
+                tiro.dadob = dresponse.payload.dados[1];
             }
             catch(e){
                 tiro.dadoa = dresponse.dados[0];
