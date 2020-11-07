@@ -18,10 +18,8 @@ services:
         build: .
         restart: always
         ports:
-            - "5000:3000"
+            - "80:3000"
         volumes:
             - type: bind 
               source: ./src
               target: /usr/src/app/src
-
-        

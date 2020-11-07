@@ -44,6 +44,7 @@ var router = express.Router();
 var path = require('path');
 var fs = require('fs');
 var jwt = require('jsonwebtoken');
+
 var http = require('http');
 var _ = require('lodash');
 var logger = fs.createWriteStream('./server/log.txt', {
@@ -52,6 +53,11 @@ var logger = fs.createWriteStream('./server/log.txt', {
 function addLog(newlog) {
     logger.write(newlog + "\n");
 }
+
+var auth = require('../authToken');
+var http = require('http');
+var _ = require('lodash');
+
 var jugadores = new Array();
 //TODO ESTO ES PARA DESENCRIPTAR TOKENS QUE SOLICITAN CONSUMIR TUS SERVICIOS DE TU MICROSERVICIO
 var publicKey = fs.readFileSync('./server/routes/public.key', 'utf8');
@@ -83,7 +89,9 @@ router.get('/listaTorneos', function (req, res, next) { return __awaiter(void 0,
 router.post('/listaUsers', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var llave;
     return __generator(this, function (_a) {
-        llave = req.body.llave;
+
+        llave = req.body.llave1;
+
         console.log("llave: " + llave);
         axios.post('http://34.69.29.183:80/listajugadores', {
             llave: llave
@@ -104,6 +112,7 @@ router.post('/listaUsers', function (req, res, next) { return __awaiter(void 0, 
     });
 }); });
 router.get('/listaJuegos', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var results, e_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -125,22 +134,39 @@ router.get('/listaJuegos', function (req, res, next) { return __awaiter(void 0, 
 }); });
 //---------------- put partidas--------------------
 router.put('/partidas2/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    return __generator(this, function (_a) {
+        axios.get('http://34.69.29.183:80/jugadores')
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+        return [2 /*return*/];
+    });
+}); });
+//---------------- put partidas--------------------
+router.put('/partidas/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var idpartida, punteo;
     return __generator(this, function (_a) {
         try {
             idpartida = req.params.id;
+
             punteo = req.body.marcador;
+
+
             if (punteo[0] > punteo[1]) {
                 console.log("jugador 1 ganador");
                 db.setPunteo(idpartida, punteo[0], punteo[1]);
                 db.getGanador(idpartida, "1");
-                fs.appendFile('../log.txt', "Partida terminada:" + idpartida + " ganador: jugador 1 (local).\n", function () { });
+
             }
             else if (punteo[0] < punteo[1]) {
                 console.log("jugador 2 ganador");
                 db.setPunteo(idpartida, punteo[0], punteo[1]);
                 db.getGanador(idpartida, "2");
-                fs.appendFile('./log.txt', "Partida terminada:" + idpartida + " ganador: jugador 2 (visitante).\n", function () { });
+
             }
             res.json({
                 201: "partida lista",
@@ -154,14 +180,21 @@ router.put('/partidas2/:id', function (req, res, next) { return __awaiter(void 0
         return [2 /*return*/];
     });
 }); });
+
 router.put('/partidas/:id', verifytoken, function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         jwt.verify(req.jwt, publicKey, verifyOptions, function (err) {
+
+router.put('/partidas2/:id', verifytoken, function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        jwt.verify(req.token, publicKey, verifyOptions, function (err) {
+
             if (err) {
                 //res.sendStatus(403);
                 res.send("error 403");
             }
             else {
+
                 var decoded = jwt.decode(req.jwt, { complete: true });
                 var exist = validateScope(decoded.payload.scopes, 'torneos.partida.put');
                 console.log(exist);
@@ -200,13 +233,48 @@ router.put('/partidas/:id', verifytoken, function (req, res, next) { return __aw
                 else {
                     res.sendStatus(403);
                 }
+
+                var decoded = jwt.decode(req.token, { complete: true });
+                try {
+                    var idpartida = req.params.id;
+                    var punteo = req.body.punteo;
+                    if (punteo[0] > punteo[1]) {
+                        console.log("jugador 1 ganador");
+                        db.setPunteo(idpartida, punteo[0], punteo[1]);
+                        db.getGanador(idpartida, "1");
+                    }
+                    else if (punteo[0] < punteo[1]) {
+                        console.log("jugador 2 ganador");
+                        db.setPunteo(idpartida, punteo[0], punteo[1]);
+                        db.getGanador(idpartida, "2");
+                    }
+                    res.json({
+                        201: "partida lista",
+                        "partida": idpartida
+                    });
+                }
+                catch (e) {
+                    console.log(e);
+                    res.sendStatus(500);
+                }
+                //res.send(respuesta);
+                res.json({
+                    header: decoded.header,
+                    payload: decoded.payload,
+                    mensaje: "post fue recibido"
+                });
+
             }
         });
         return [2 /*return*/];
     });
 }); });
 router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var results, e_3;
+
+    var results, e_2;
+
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -218,8 +286,13 @@ router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, vo
                 res.json(results);
                 return [3 /*break*/, 3];
             case 2:
+
                 e_3 = _a.sent();
                 console.log(e_3);
+
+                e_2 = _a.sent();
+                console.log(e_2);
+
                 res.sendStatus(500);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
@@ -229,6 +302,7 @@ router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, vo
 //------------------delete torneo, users, juegos-------------------
 router.post('/deleteUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
+
         /*axios.delete('http://34.69.29.183:80/jugadores/'+req.body.id1)
         .then(function(response:AxiosResponse){
             res.send(res.json(response.data));
@@ -242,10 +316,18 @@ router.post('/deleteUser', function (req, res, next) { return __awaiter(void 0, 
                 });
             });
         }.bind(this));
+      axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id1)
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/deleteJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var results, e_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -267,6 +349,20 @@ router.post('/deleteJuego', function (req, res, next) { return __awaiter(void 0,
 }); });
 router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var results, e_5;
+
+    return __generator(this, function (_a) {
+        axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id)
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+        return [2 /*return*/];
+    });
+}); });
+router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var results, e_3;
+
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -277,8 +373,13 @@ router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, vo
                 res.json(results);
                 return [3 /*break*/, 3];
             case 2:
+
                 e_5 = _a.sent();
                 console.log(e_5);
+
+                e_3 = _a.sent();
+                console.log(e_3);
+
                 res.sendStatus(500);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
@@ -288,13 +389,14 @@ router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, vo
 //-------------------------inserts torneo, users, juego-----------------
 router.post('/insertUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        /*axios.post('http://34.69.29.183:80/jugadores',{
+
             nombres: req.body.nombres1,
             apellidos: req.body.apellidos1,
             correo: req.body.correo1,
             password: req.body.password1,
             administrador: req.body.administrador1
         })
+
         .then(function(response:AxiosResponse){
             res.send(res.json(response.data));
         }).catch(function(e:AxiosError){
@@ -307,10 +409,18 @@ router.post('/insertUser', function (req, res, next) { return __awaiter(void 0, 
                 });
             });
         }.bind(this));
+
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/insertJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var results, e_6;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -332,13 +442,35 @@ router.post('/insertJuego', function (req, res, next) { return __awaiter(void 0,
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
         }
+
+    return __generator(this, function (_a) {
+        axios.post('http://34.69.29.183:80/jugadores', {
+            nombres: req.body.nombres,
+            apellidos: req.body.apellidos,
+            correo: req.body.correo,
+            password: req.body.password,
+            administrador: req.body.administrador1
+        })
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+        return [2 /*return*/];
+
     });
 }); });
 router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
+
         funcionLista(req, res, function () {
             return __awaiter(this, void 0, void 0, function () {
                 var matriz, json, llave, cantidadj, idtorneo, arreglopartidas, a, b, partidas, i, idpartida, llave, i, idpartida, llave, i, x, j, e_7;
+
+        funcionLista(function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var matriz, json, llave, cantidadj, idtorneo, arreglopartidas, a, b, partidas, i, idpartida, llave, i, idpartida, llave, i, x, j, e_4;
+
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -350,8 +482,14 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             llave = req.body.llave1;
                             console.log("llave: " + llave);
                             cantidadj = jugadores.length;
+
                             if (!(cantidadj % 2 == 0)) return [3 /*break*/, 14];
                             //console.log("entro al if");
+
+                            console.log("talegueo");
+                            if (!(cantidadj % 2 == 0)) return [3 /*break*/, 14];
+                            console.log("entro al if");
+
                             console.log("cantidad jugadores: " + cantidadj);
                             return [4 /*yield*/, db.insertar(req.body.nombre, req.body.llave1, req.body.url, req.body.idjuego)];
                         case 2:
@@ -392,6 +530,7 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             _a.label = 9;
                         case 9:
                             if (!(i < partidas)) return [3 /*break*/, 13];
+
                             return [4 /*yield*/, db.insertarPartida(idtorneo)];
                         case 10:
                             idpartida = _a.sent();
@@ -411,19 +550,29 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             for (i = 1; i < matriz.length; i++) {
                                 x = 0;
                                 for (j = 0; j < matriz[i].length; j++) {
-                                    //console.log("esto tiene la matriz"+matriz);
+
+
+                                    console.log("esto tiene la matriz" + matriz);
+
                                     db.controlTorneo(matriz[i][j], matriz[i - 1][x], matriz[i - 1][x + 1]);
                                     x += 2;
                                 }
                             }
                             json = { "estado": 201, "torneo": idtorneo, "partidas": matriz };
                             res.json(json);
+
                             fs.appendFile('./proyectosa/log.txt', "Torneo Creado:" + idtorneo + " Partidas:" + matriz.length + ".\n", function () { });
                             addLog("torneo insertardo:" + idtorneo + " partidas: " + matriz.length + "\n");
                             return [3 /*break*/, 16];
                         case 15:
                             e_7 = _a.sent();
                             console.log(e_7);
+
+                            return [3 /*break*/, 16];
+                        case 15:
+                            e_4 = _a.sent();
+                            console.log(e_4);
+
                             res.sendStatus(500);
                             return [3 /*break*/, 16];
                         case 16: return [2 /*return*/];
@@ -437,14 +586,20 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
 //-------------------update------------------
 router.post('/updateUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
+
         /*console.log("id: "+req.body.id1);
         axios.put('http://34.69.29.183:80/jugadores/'+req.body.id1,{
+
+        console.log("id: " + req.body.id1);
+        axios.put('http://34.69.29.183:80/jugadores/' + req.body.id1, {
+
             nombres: req.body.nombres1,
             apellidos: req.body.apellidos1,
             correo: req.body.correo1,
             password: req.body.password1,
             administrador: req.body.administrador1
         })
+
         .then(function(response:AxiosResponse){
             res.send(res.json(response.data));
         }).catch(function(e:AxiosError){
@@ -457,10 +612,18 @@ router.post('/updateUser', function (req, res, next) { return __awaiter(void 0, 
                 });
             });
         }.bind(this));
+
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/updateJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var results, e_8;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -506,6 +669,47 @@ router.post('/login', function (req, res, next) { return __awaiter(void 0, void 
         return [2 /*return*/];
     });
 }); });
+
+    return __generator(this, function (_a) {
+        axios.put('http://34.69.29.183:80/jugadores/:' + req.body.id1, {
+            nombres: req.body.nombres1,
+            apellidos: req.body.apellidos1,
+            correo: req.body.correo1,
+            password: req.body.password1,
+            administrador: req.body.administrador1
+        })
+            .then(function (response) {
+            res.send(res.json(response.data));
+        })["catch"](function (e) {
+            res.send(e.message);
+        });
+        return [2 /*return*/];
+    });
+}); });
+//------------------------login--------------------
+router.post('/login', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var correo, password, a;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                correo = req.body.correo;
+                password = req.body.password;
+                return [4 /*yield*/, axios.get('http://34.69.29.183:80/login', {
+                        correo: req.body.correo1,
+                        password: req.body.password1
+                    })
+                        .then(function (response) {
+                        res.send(res.json(response.data));
+                    })["catch"](function (e) {
+                        res.send(e.message);
+                    })];
+            case 1:
+                a = _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); });
+
 //--------------------pedir token---------------
 /*(function() {
     var token:String = 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8=';
@@ -540,6 +744,7 @@ router.post('/token', function (req, res, next) { return __awaiter(void 0, void 
     });
 }); });
 // Authorization: Bearer <token>
+
 router.post("/generar", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         axios.post('http://35.223.103.13:3000/generar', {
@@ -583,17 +788,21 @@ function validateScope(scopes, idruta) {
     });
     return result;
 }
+
 function verifytoken(req, res, next) {
     var bearerHeader = req.headers['authorization'];
     if (typeof bearerHeader !== 'undefined') {
         var bearerToken = bearerHeader.split(" ")[1];
+
         req.jwt = bearerToken;
+
         next();
     }
     else {
         res.sendStatus(403); //ruta o acceso prohibido
     }
 }
+
 function funcionLista(req, res, callback) {
     listarUsuarios(req, res, function () {
         return callback();
@@ -700,6 +909,14 @@ function loginUsuario(req, res, callback) {
     }.bind(this));
 }
 function listarUsuarios(req, res, callback) {
+
+function funcionLista(callback) {
+    listarUsuarios(function () {
+        return callback();
+    }.bind(this));
+}
+function listarUsuarios(callback) {
+
     console.log("verificar auth...");
     llamarServicioAuth(function (bearerToken) {
         var _this = this;
@@ -712,7 +929,9 @@ function listarUsuarios(req, res, callback) {
             else {
                 //Logica para tirar dados......!
                 console.log("llamando servicio listar...");
+
                 llamarServicioListar(req, res, bearerToken, function () {
+
                     return callback();
                 }.bind(_this));
             }
@@ -735,14 +954,17 @@ function llamarServicioAuth(callback) {
             //console.info('POST result:'+d+'\n');
             //process.stdout.write(d+'\n');
             var data = JSON.parse(d);
+
             bearerToken = data.jwt;
             console.log("token: " + bearerToken);
             addLog("autenticación de token" + bearerToken + "\n");
+
             return callback(bearerToken);
         });
     }.bind(this));
     reqAuth.end();
 }
+
 function llamarServicioListar(req, res, bearerToken, callback) {
     var j = axios.post('http://34.69.29.183:80/listajugadores', {
         llave: req.body.llave1
@@ -753,10 +975,32 @@ function llamarServicioListar(req, res, bearerToken, callback) {
     })
         .then(function (response) {
         console.log("->>>>>>  Consumiendo servicio de jugadores -> POST -> http://34.69.29.183:80/jugadores");
+
+function llamarServicioListar(bearerToken, callback) {
+    var objAuth = { 'Authorization': 'Bearer ' + bearerToken };
+    var llave = { 'llave': '2' };
+    var optionsdados = {
+        host: '34.69.29.183',
+        path: ':80/listajugadores',
+        method: 'POST',
+        headers: objAuth,
+        body: llave
+    };
+    var j = axios.post('http://34.69.29.183:80/listajugadores', {
+        llave: 2
+    }, {
+        headers: {
+            'Authorization': "Basic " + bearerToken
+        }
+    })
+        .then(function (response) {
+        console.log("->>>>>>  Consumiendo servicio de jugadores -> POST -> http://34.69.29.183:80/listajugadores");
+
         for (var i = 0; i < response.data.rows.length; i++) {
             console.log("id: " + response.data.rows[i].id);
             jugadores.push(Number(response.data.rows[i].id));
         }
+
         //res.send(res.json(response.data));
         console.log("jugadores: " + jugadores.length);
         addLog("llamada servicio jugadores\n");
@@ -843,5 +1087,31 @@ function llamarServicioLogin(req, res, bearerToken, callback) {
     })["catch"](function (e) {
         res.send(e.message);
     });
+
+        console.log("jugadores: " + jugadores.length);
+        return callback(jugadores);
+        //res.send(res.json(response.data));
+    })["catch"](function (e) {
+        //res.send(e.message);
+    });
+    /*console.log("->>>>>>  Consumiendo servicio de jugadores -> POST -> http://34.69.29.183:80/listajugadores")
+    var reqDados = http.request(optionsdados, function(res) {
+        console.log("statusCode: ", res.statusCode);
+        res.on('data', function(d) {
+            //console.info('POST result:'+d+'\n');
+            //process.stdout.write(d+'\n');
+            var dresponse = JSON.parse(d);
+
+            console.log (">>>>>>>>>>>>>>>>>>>>>>jugadores!")
+            console.log(dresponse);
+            
+        });
+    }.bind(this));
+    reqDados.end();
+    reqDados.on('error', function(e) {
+       
+        console.error(e);
+    }.bind(this));*/
+
 }
 module.exports = router;
