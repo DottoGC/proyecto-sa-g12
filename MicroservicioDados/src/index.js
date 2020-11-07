@@ -1,16 +1,9 @@
-
 var express = require('express');
 const path = require('path');
 const fs = require('fs');
-
 var jwt=require('jsonwebtoken')
 
 var app = express();
-
-var microservicio_juegos = {
-    cliente_id: 'micro-juegos',
-    cliente_secret: 'secret-juegos-micro'
-};
 
 //TODO ESTO ES PARA DESENCRIPTAR TOKENS QUE SOLICITAN CONSUMIR TUS SERVICIOS DE TU MICROSERVICIO
 var publicKey = fs.readFileSync('./public.key','utf8');
@@ -18,8 +11,6 @@ var verifyOptions = {
     algorithms: ["RS256"],
     maxAge: "60s"    
 };
-
-
 
 
 let respuesta = {
@@ -40,41 +31,69 @@ function getRandomInt() {
 }
 
 
+function validateScope(scopes,idruta)
+{
+    var result=false;
+    /*scopes.forEach(
+        
+        element => (element==idruta)? true: false
+    
+    );*/
+    scopes.forEach(function(word) {
+        console.log(word);
+        console.log(idruta);
+        if (word === idruta) {
+          console.log(true);
+          result=true;
+        }
+
+      });
+      return result;
+}
+
 app.route('/tirar/:id')
     .post(verifytoken,function (req, res) {
 
-        jwt.verify(req.token,publicKey,verifyOptions,(err)=>{
+        jwt.verify(req.jwt,publicKey,verifyOptions,(err)=>{
             if(err){
-                respuesta.error=true
-                respuesta.codigo=403
-                respuesta.datos=-1
-                respuesta.cantidad=-1
-                //res.sendStatus(403);
-                res.send(respuesta);
-            }else{
-                var decoded = jwt.decode(req.token, {complete: true});
-
-                var numDados=parseInt(req.params.id)
-                console.log('Tirando '+numDados+' dados...');
-
-                var cadena=[]    
-                for (var i = 0; i < numDados; i++) {
-                    cadena.push(getRandomInt())
-                }    
-                
-                respuesta.error= false//Numero de dados
-                respuesta.codigo= 200//Numero de dados
-                respuesta.cantidad= numDados//Numero de dados
-                respuesta.dados= cadena//Suma de puntos entre los N dados                
-
+                //respuesta.error=true
+                //respuesta.codigo=403
+               // respuesta.datos=-1
+                //respuesta.cantidad=-1
+                res.sendStatus(403);
                 //res.send(respuesta);
+            }else{
+                var decoded = jwt.decode(req.jwt, {complete: true});
 
-                res.json({
-                    header: decoded.header,
-                    payload: decoded.payload,
-                    mensaje: "post fue recibido",
-                    respuesta,
-                });
+                //console.log(decoded.payload.scopes);
+                var exist=validateScope(decoded.payload.scopes,'dados.tirar');
+                console.log(exist);
+                if(exist){
+                    var numDados=parseInt(req.params.id)
+                    console.log('Tirando '+numDados+' dados...');
+    
+                    var cadena=[]    
+                    for (var i = 0; i < numDados; i++) {
+                        cadena.push(getRandomInt())
+                    }    
+                    
+                    respuesta.error= false//Numero de dados
+                    respuesta.codigo= 200//Numero de dados
+                    respuesta.cantidad= numDados//Numero de dados
+                    respuesta.dados= cadena//Suma de puntos entre los N dados                
+    
+                    //res.send(respuesta);
+                    decoded.payload.dados=cadena;
+                    res.json({
+                        header: decoded.header,
+                        payload: decoded.payload,
+                        //respuesta,
+                    });
+                }else{
+                    res.sendStatus(403)
+                }
+
+
 
 
                /* res.json({
@@ -107,7 +126,7 @@ function verifytoken(req,res,next){
 
     if(typeof bearerHeader !=='undefined'){
         const bearerToken=bearerHeader.split(" ")[1];
-        req.token=bearerToken;
+        req.jwt=bearerToken;
         next();
     }else{
         res.sendStatus(403) //ruta o acceso prohibido
@@ -115,6 +134,6 @@ function verifytoken(req,res,next){
 }
 
 
-app.listen(8088, function () {
-  console.log('Microservice \'Dados\' listening on port 8088!');
+app.listen(8080, function () {
+  console.log('Microservice \'Dados\' listening on port 8080!');
 });
