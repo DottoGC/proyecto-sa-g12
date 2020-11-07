@@ -88,9 +88,7 @@ proyectobd.insertarLlave= (idusuario1,idusuario2,idpartida) => {
     
     console.log("esto trae partida"+idpartida);    
     return new Promise((resolve, reject) => {
-
         const query = "INSERT INTO llave2(idusuario1,idusuario2,punteo1,punteo2,idpartida) VALUES (" + idusuario1 + ","+ idusuario2 +",0,0,"+ idpartida +");";
-
         con.query(query, (err, res) => {
         if (err) throw err;           
         
@@ -100,7 +98,6 @@ proyectobd.insertarLlave= (idusuario1,idusuario2,idpartida) => {
 
 
 };
-
 proyectobd.setPunteo= (idpartida,punteo1,punteo2) => {
     
     console.log("setpunteo "+idpartida+" "+punteo1+" "+punteo2);    
@@ -181,7 +178,6 @@ proyectobd.partidaSiguiente= (idpartida,ganador) => {
 };
 
 
-
 proyectobd.controlTorneo= (id1,id2,id3) => {
     
     console.log("esto trae id1 "+id1+"id2 "+id2+"id3 "+id3);    
@@ -193,6 +189,9 @@ proyectobd.controlTorneo= (id1,id2,id3) => {
         resolve(res.insertId);
         });
     });
+
+
+};
 
 
 
