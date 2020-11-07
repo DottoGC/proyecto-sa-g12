@@ -6,4 +6,5 @@ COPY package.json .
 RUN npm install --save
 RUN npm install mysql --save
 RUN npm install body-parser --save
+RUN npm install jsonwebtoken --save
 CMD ["npm","run", "start"]

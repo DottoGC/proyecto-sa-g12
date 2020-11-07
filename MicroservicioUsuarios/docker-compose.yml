@@ -18,10 +18,26 @@ services:
         build: .
         restart: always
         ports:
-            - "5000:3000"
+            - "80:3000"
         volumes:
             - type: bind 
               source: ./src
               target: /usr/src/app/src
+
+    jenkins:
+        image: 'jenkins/jenkins:lts'
+        container_name: 'jenkins'
+        restart: always
+        ports:
+        - '8080:8080'
+        - '50000:50000'
+        volumes:
+        - jenkins-data:/etc/github
+        - /var/run/docker.sock:/var/run/docker.sock
+
+    volumes:
+    jenkins-data:
+        name: jenkins-data
+        
 
         
