@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 
-//var juegosip = "http://35.223.103.13:3000";
-var juegosip = "http://localhost:3000";
+var juegosip = "http://35.223.103.13:3000";
+//var juegosip = "http://localhost:3000";
 
 @Injectable({
   providedIn: 'root'
