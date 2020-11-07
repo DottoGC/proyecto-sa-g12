@@ -379,12 +379,19 @@ function tirarDados(callback){
                 return callback();
             }else{
                 //Logica para tirar dados......!
-                addLog("llamando servicio tirar...");
-                llamarServicioTirar(bearerToken,function(){
-                    verificaDobleSeis(function(){
-                        return callback();
+                var decoded = jwt.decode(bearerToken, {complete: true});
+                var exist=validateScope(decoded.payload.scopes,'dados.tirar');
+                if(exist){
+                    addLog("llamando servicio tirar...");
+                    llamarServicioTirar(bearerToken,function(){
+                        verificaDobleSeis(function(){
+                            return callback();
+                        }.bind(this));
                     }.bind(this));
-                }.bind(this));
+                }
+                else{
+                    return callback();
+                }
             }  
         });
     }.bind(this));
@@ -509,6 +516,19 @@ function obtenerCasilla(numCasilla, callback) {
     }
     return callback(resultado);
 }
+
+function validateScope(scopes,idruta)
+{
+    var result=false;
+    scopes.forEach(function(word) {
+        if (word === idruta) {
+          result=true;
+        }
+
+      });
+      return result;
+}
+
 
 function init_new_game(){
     juego = [];
