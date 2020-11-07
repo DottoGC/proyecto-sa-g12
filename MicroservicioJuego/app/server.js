@@ -68,7 +68,7 @@ var verifyOptions = {
 
 //SERVER START...............................................................
 app.listen(port, hostname, () => {
-  logger.write(`Server running at http://${hostname}:${port}/`);
+  addLog(`Server running at http://${hostname}:${port}/`);
   init_new_game();
 });
 
@@ -81,7 +81,7 @@ app.get('/', (req, res) =>{
 });
 
 app.post('/generar', (req, res) =>{
-    logger.write("Start new game...");
+    addLog("Start new game...");
     const body = req.body;
     
     //initialize game
@@ -107,7 +107,7 @@ app.post('/generar', (req, res) =>{
 });
 
 app.post('/simularpartida', (req, res) =>{
-    logger.write("Start simulation...");
+    addLog("Start simulation...");
     const body = req.body;
     
     gameSimulation();
@@ -119,7 +119,7 @@ app.post('/simularpartida', (req, res) =>{
 });
 
 app.post('/simular', (req, res) =>{
-    logger.write("Start simulation...");
+    addLog("Start simulation...");
     const body = req.body;
     
     //initialize game
@@ -146,7 +146,7 @@ app.post('/simular', (req, res) =>{
 });
 
 app.post('/tirar', (req, res) =>{
-    logger.write("Tirando...");
+    addLog("Tirando...");
     //const body = req.body;
     funcionTirar();
     res.statusCode = 200;
@@ -156,7 +156,7 @@ app.post('/tirar', (req, res) =>{
 })
 
 app.post('/getInfo', (req, res) =>{
-    logger.write("Obteniendo informacion...");
+    addLog("Obteniendo informacion...");
     const body = req.body;
 
     var respuesta = {
@@ -172,6 +172,9 @@ app.post('/getInfo', (req, res) =>{
 });
 
 //FUNCTIONS AND METHODS
+function addLog(newlog){
+    logger.write(newlog+"\n");
+}
 
 // Authorization: Bearer <token>
 function verifytoken(req,res,next){
@@ -189,20 +192,20 @@ function verifytoken(req,res,next){
 function funcionTirar(){
     if (!finjuego){
         //tirar dado
-        logger.write("tirando dados...");
+        addLog("tirando dados...");
         tirarDados(function(){
-            logger.write("fin tirar dados...");
+            addLog("fin tirar dados...");
             verificaUltimaCasilla(function(ultima){
-                logger.write("verificando ultima casilla...");
-                //logger.write(jugador);
+                addLog("verificando ultima casilla...");
+                //addLog(jugador);
                 if (ultima){
                     finjuego = true;
                     //set resultados
-                    logger.write("End of the game...");
+                    addLog("End of the game...");
                     for(jfinal in jugadores){
-                        logger.write(jugadores[jfinal]);
+                        addLog(JSON.stringify(jugadores[jfinal]));
                     }
-                    logger.write("Maxima casilla: "+maximacasilla);
+                    addLog("Maxima casilla: "+maximacasilla);
                     
                     punteoMaximo = 0;
                     var marcador = "";
@@ -213,7 +216,7 @@ function funcionTirar(){
                         }
                         marcador = marcador + jugadores[i].punteo + ","
                     }
-                    logger.write("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
+                    addLog("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
                     llamarServicioPartidas(marcador);
                 }
                 else{
@@ -237,14 +240,14 @@ function llamarServicioPartidas(marcador){
         json: true
     };
 
-    logger.write("->>>>>>  Consumiendo servicio de Torneos -> PUT -> 34.69.221.75/tirar/"+idpartida)
-    logger.write(postData);
-    return;
+    addLog("->>>>>>  Consumiendo servicio de Torneos -> PUT -> 34.69.221.75/tirar/"+idpartida)
+    addLog(JSON.stringify(postData));
+    //return;
     var req = http.request(optionsService, function(res) {
         res.on('data', function(d) {
             process.stdout.write(d+'\n');
             var dresponse = JSON.parse(d);
-            logger.write (">>>>>>>>>>>>>>>>>>>>>>Se reporto marcador: "+marcadordata)
+            addLog (">>>>>>>>>>>>>>>>>>>>>>Se reporto marcador: "+marcadordata)
         });
     }.bind(this));
     req.end();
@@ -254,27 +257,27 @@ function llamarServicioPartidas(marcador){
 }
 
 async function gameFullSimulation(){
-    logger.write("let the full simulation begin!");    
-    logger.write(jugadores);
+    addLog("let the full simulation begin!");    
+    addLog(JSON.stringify(jugadores));
     var i = 0
     while (maximacasilla < 120){
         i++;
     //for(var i = 0; i < 10 ; i++){
         //await sleep(500);
-        logger.write("TURNO #"+i+".................................!");
+        addLog("TURNO #"+i+".................................!");
         turno = i;
         for(j in jugadores){
             if (!finjuego){
                 jugador = jugadores[j];
                 jugadoractual = jugador.nombre;
                 
-                logger.write(" - Turno "+i+"........"+jugador);
+                addLog(" - Turno "+i+"........"+JSON.stringify(jugador));
                 //tirar dado
                 tirarDados(function(){
-                    logger.write("fin tirar dados...");
+                    addLog("fin tirar dados...");
                     verificaUltimaCasilla(function(ultima){
-                        logger.write("verificando ultima casilla...");
-                        logger.write(jugador);
+                        addLog("verificando ultima casilla...");
+                        addLog(JSON.stringify(jugador));
                         if (ultima){
                             finjuego = true;
                             setResults();
@@ -288,25 +291,25 @@ async function gameFullSimulation(){
 }
 
 async function gameSimulation(){
-    logger.write("let the simulation begin!");
+    addLog("let the simulation begin!");
     var i = turno;
     while (maximacasilla < 120){
-        logger.write("TURNO #"+i+".................................!");
+        addLog("TURNO #"+i+".................................!");
         turno = i;
         for(j in jugadores){
             //(function(j){
                 //var x = j;
-                //logger.write(j);
+                //addLog(j);
                 if (!finjuego){
                     jugador = jugadores[j];
                     jugadoractual = jugador.nombre;
-                    //logger.write(jugador);
+                    //addLog(jugador);
                     //tirar dado
                     tirarDados(function(){
-                        logger.write("fin tirar dados...");
+                        addLog("fin tirar dados...");
                         verificaUltimaCasilla(function(ultima){
-                            logger.write("verificando ultima casilla...");
-                            logger.write(jugador);
+                            addLog("verificando ultima casilla...");
+                            addLog(JSON.stringify(jugador));
                             if (ultima){
                                 finjuego = true;
                                 setResults();
@@ -322,11 +325,11 @@ async function gameSimulation(){
 }
 
 function setResults(){
-    logger.write("End of the game...");
+    addLog("End of the game...");
     for(jfinal in jugadores){
-        logger.write(jugadores[jfinal]);
+        addLog(JSON.stringify(jugadores[jfinal]));
     }
-    logger.write("Maxima casilla: "+maximacasilla);
+    addLog("Maxima casilla: "+maximacasilla);
     
     punteoMaximo = 0;
     var marcador = "";
@@ -337,7 +340,7 @@ function setResults(){
         }
         marcador = marcador + jugadores[i].punteo + ","
     }
-    logger.write("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
+    addLog("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
     if (idpartida !=""){
         llamarServicioPartidas(marcador);
     }
@@ -356,7 +359,7 @@ function setNextTurn(){
         jugador = jugadores[ronda];
         jugadoractual = jugador.nombre;
     }
-    logger.write("siguiente turno..."+ronda);
+    addLog("siguiente turno..."+ronda);
 }
 
 function sleep(period){
@@ -365,16 +368,16 @@ function sleep(period){
 
 function tirarDados(callback){
     //Llamar a servicio tirar
-    logger.write("verificar auth...");
+    addLog("verificar auth...");
     llamarServicioAuth(function(bearerToken){
-        //logger.write(bearerToken);
+        //addLog(bearerToken);
         jwt.verify(bearerToken,publicKey,verifyOptions,(err)=>{
             if(err){
-                logger.write("error auth...");
+                addLog("error auth...");
                 return callback();
             }else{
                 //Logica para tirar dados......!
-                logger.write("llamando servicio tirar...");
+                addLog("llamando servicio tirar...");
                 llamarServicioTirar(bearerToken,function(){
                     verificaDobleSeis(function(){
                         return callback();
@@ -394,15 +397,15 @@ function llamarServicioAuth(callback) {
         headers: objAuth
     };
     var bearerToken = "";
-    logger.write("->>>>>>  Consumiendo servicio de dados -> POST -> 35.232.54.106/getToken")
+    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> 35.232.54.106/getToken")
     var reqAuth = http.request(optionsAuth, function(res) {
-        logger.write("statusCode: ", res.statusCode);
+        addLog("statusCode: "+ res.statusCode);
         res.on('data', function(d) {
             //console.info('POST result:'+d+'\n');
             //process.stdout.write(d+'\n');
             var data = JSON.parse(d);
             bearerToken = data.token;
-            //logger.write("token: "+bearerToken);
+            //addLog("token: "+bearerToken);
             return callback(bearerToken);
         });
     }.bind(this));
@@ -418,15 +421,15 @@ function llamarServicioTirar(bearerToken,callback){
         headers: objAuth
     };
 
-    logger.write("->>>>>>  Consumiendo servicio de dados -> POST -> 34.69.221.75/tirar/2")
+    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> 34.69.221.75/tirar/2")
     var reqDados = http.request(optionsdados, function(res) {
-        //logger.write("statusCode: ", res.statusCode);
+        //addLog("statusCode: ", res.statusCode);
         res.on('data', function(d) {
             //console.info('POST result:'+d+'\n');
-            process.stdout.write(d+'\n');
+            //process.stdout.write(d+'\n');
             var dresponse = JSON.parse(d);
-            logger.write (">>>>>>>>>>>>>>>>>>>>>>TIRO realizado!")
-            //logger.write(dresponse);
+            addLog (">>>>>>>>>>>>>>>>>>>>>>TIRO realizado!")
+            //addLog(dresponse);
             try{
                 tiro.dadoa = dresponse.respuesta.dados[0];
                 tiro.dadob = dresponse.respuesta.dados[1];
@@ -447,10 +450,10 @@ function llamarServicioTirar(bearerToken,callback){
 }
 
 function verificaDobleSeis(callback){
-    logger.write("verificando doble seis...");
+    addLog("verificando doble seis...");
     if (tiro.dadoa == 6 && tiro.dadob == 6){
         jugador.punteo = jugador.punteo + 10;
-        logger.write("DOBLE SEIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        addLog("DOBLE SEIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
      //avanar casilla
     avanzarCasillas(function(){
@@ -459,8 +462,8 @@ function verificaDobleSeis(callback){
 }
 
 function avanzarCasillas(callback){
-    logger.write("avanzando casillas...");
-    logger.write(jugador);
+    addLog("avanzando casillas...");
+    addLog(JSON.stringify(jugador));
     jugador.casilla = jugador.casilla + tiro.dadoa + tiro.dadob;
     obtenerCasilla(jugador.casilla, function(casilla){
         if (casilla != null){
@@ -489,17 +492,17 @@ function avanzarCasillas(callback){
 function verificaUltimaCasilla(callback){
     if (jugador.casilla >= 120){
         jugador.punteo = jugador.punteo + 10;
-        logger.write("ULTIMA CASILLA >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        addLog("ULTIMA CASILLA >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         return callback(true);
     }
     return callback(false);
 }
 
 function obtenerCasilla(numCasilla, callback) {
-    logger.write("obteniendo casilla #"+numCasilla);
+    addLog("obteniendo casilla #"+numCasilla);
     var resultado = _.find(juego,{numero:numCasilla});
     if(resultado == null || resultado == undefined){
-        console.error("No existe casilla!");
+        addLog("No existe casilla No.: "+numCasilla);
         return callback(null);
     }
     return callback(resultado);
