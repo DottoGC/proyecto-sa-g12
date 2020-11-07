@@ -8,7 +8,7 @@ const hostname = '0.0.0.0';
 const port = 3000;
 const ip_dados = '34.69.221.75';
 const ip_tokens = '35.232.54.106';
-const ip_partidas = '1.1.1.1';
+const ip_partidas = '34.68.127.94';
 
 //IMPORTS....................................................................
 var express = require('express');
@@ -86,26 +86,27 @@ app.post('/generar', (req, res) =>{
     addLog("Start new game...");
     const body = req.body;
     
-    //initialize game
-    init_new_game();
-    
-    //get players
-    //var players = ["PlayerA","PlayerB","PlayerC","PlayerD"];//body.players
-    var players = body.jugadores;
-    idpartida = body.id;
-    for(p in players){
-        jugador.nombre = players[p];
-        var nuevoJugador = Object.assign({}, jugador);
-        jugadores.push(nuevoJugador);
-    }
-    //start game
-    jugador = jugadores[ronda];
-    jugadoractual = jugador.nombre;
+    verifytoken(req,res,function(){
+        //initialize game
+        init_new_game();
+        //get players
+        //var players = ["PlayerA","PlayerB","PlayerC","PlayerD"];//body.players
+        var players = body.jugadores;
+        idpartida = body.id;
+        for(p in players){
+            jugador.nombre = players[p];
+            var nuevoJugador = Object.assign({}, jugador);
+            jugadores.push(nuevoJugador);
+        }
+        //start game
+        jugador = jugadores[ronda];
+        jugadoractual = jugador.nombre;
 
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.send("New game is started!");
-    res.end();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/plain');
+        res.send("New game is started!");
+        res.end();
+    }.bind(this));
 });
 
 app.post('/simularpartida', (req, res) =>{
@@ -124,27 +125,29 @@ app.post('/simular', (req, res) =>{
     addLog("Start simulation...");
     const body = req.body;
     
-    //initialize game
-    init_new_game();
+    verifytoken(req,res,function(){
+        //initialize game
+        init_new_game();
     
-    //get players
-    //var players = ["PlayerA","PlayerB","PlayerC","PlayerD"];//body.players
-    var players = body.jugadores;
-    idpartida = body.id;
-    
-    for(p in players){
-        jugador.nombre = players[p];
-        var nuevoJugador = Object.assign({}, jugador);
-        jugadores.push(nuevoJugador);
-    }
-    //start game
-    jugadoractual = jugadores[ronda];
-    gameFullSimulation();
+        //get players
+        //var players = ["PlayerA","PlayerB","PlayerC","PlayerD"];//body.players
+        var players = body.jugadores;
+        idpartida = body.id;
+        
+        for(p in players){
+            jugador.nombre = players[p];
+            var nuevoJugador = Object.assign({}, jugador);
+            jugadores.push(nuevoJugador);
+        }
+        //start game
+        jugadoractual = jugadores[ronda];
+        gameFullSimulation();
 
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.send("Server simulation is done!");
-    res.end();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/plain');
+        res.send("Server simulation is done!");
+        res.end();
+    }.bind(this));
 });
 
 app.post('/tirar', (req, res) =>{
@@ -180,14 +183,17 @@ function addLog(newlog){
 
 // Authorization: Bearer <token>
 function verifytoken(req,res,next){
+    addLog("verificando token...");
     const bearerHeader=req.headers['authorization'];
 
     if(typeof bearerHeader !=='undefined'){
+        addLog("Verificado!");
         const bearerToken=bearerHeader.split(" ")[1];
         req.token=bearerToken;
         next();
     }else{
-        res.sendStatus(403) //ruta o acceso prohibido
+        addLog("Acceso denegado!");
+        res.sendStatus(403); //ruta o acceso prohibido
     }
 }
 
@@ -210,16 +216,34 @@ function funcionTirar(){
                     addLog("Maxima casilla: "+maximacasilla);
                     
                     punteoMaximo = 0;
-                    var marcador = "";
+                    var marcador = [];
                     for (let i = 0; i<jugadores.length; i++){
                         if (jugadores[i].punteo > punteoMaximo){
                             punteoMaximo = jugadores[i].punteo;
                             ganador = jugadores[i].nombre;
                         }
-                        marcador = marcador + jugadores[i].punteo + ","
+                        marcador.push(jugadores[i].punteo);
                     }
                     addLog("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
-                    llamarServicioPartidas(marcador);
+                    llamarServicioAuth(function(bearerToken){
+                        //addLog(bearerToken);
+                        jwt.verify(bearerToken,publicKey,verifyOptions,(err)=>{
+                            if(err){
+                                addLog("error auth...");
+                                addLog("Error al actualizar partida: "+idpartida);
+                            }else{
+                                //Logica para tirar dados......!
+                                var decoded = jwt.decode(bearerToken, {complete: true});
+                                var exist=validateScope(decoded.payload.scopes,'dados.tirar');
+                                if(exist){
+                                    addLog("llamando servicio PARTIDAS...");
+                                    llamarServicioPartidas(bearerToken,marcador,function(){
+                                        addLog("Se ha actualizado partida: "+idpartida);
+                                    }.bind(this));
+                                }
+                            }
+                        });
+                    }.bind(this));
                 }
                 else{
                     //set proximo turno
@@ -231,15 +255,17 @@ function funcionTirar(){
 
 }
 
-function llamarServicioPartidas(marcador){
-    var marcadordata = marcador.substr(0, marcador.length-1);
-    var postData = {'marcador': marcadordata};
+function llamarServicioPartidas(bearerToken,marcador,callback){
+    //var marcadordata = marcador.substr(0, marcador.length-1);
+    objAuth = {'Authorization': 'Bearer '+bearerToken};
+    var postData = {'marcador': marcador};
     var optionsService = {
         host : ip_partidas,
         path : '/partidas/'+idpartida,
-        method : 'put',
+        method : 'PUT',
         body: postData,
-        json: true
+        json: true,
+        headers: objAuth
     };
 
     addLog("->>>>>>  Consumiendo servicio de Torneos -> PUT -> "+ip_partidas+"/partidas/"+idpartida)
@@ -249,12 +275,14 @@ function llamarServicioPartidas(marcador){
         res.on('data', function(d) {
             //process.stdout.write(d+'\n');
             //var dresponse = JSON.parse(d);
-            addLog (">>>>>>>>>>>>>>>>>>>>>>Se reporto marcador: "+marcadordata)
+            addLog (">>>>>>>>>>>>>>>>>>>>>>Se reporto marcador: "+marcador)
+            return callback();
         });
     }.bind(this));
     req.end();
     req.on('error', function(e) {
         console.error(e);
+        return callback();
     }.bind(this));
 }
 
@@ -334,17 +362,35 @@ function setResults(){
     addLog("Maxima casilla: "+maximacasilla);
     
     punteoMaximo = 0;
-    var marcador = "";
+    var marcador = [];
     for (let i = 0; i<jugadores.length; i++){
         if (jugadores[i].punteo > punteoMaximo){
             punteoMaximo = jugadores[i].punteo;
             ganador = jugadores[i].nombre;
         }
-        marcador = marcador + jugadores[i].punteo + ","
+        marcador.push(jugadores[i].punteo);
     }
     addLog("El ganador del juego es "+ganador+" con un total de "+punteoMaximo+" puntos.")
     if (idpartida !=""){
-        llamarServicioPartidas(marcador);
+        llamarServicioAuth(function(bearerToken){
+            //addLog(bearerToken);
+            jwt.verify(bearerToken,publicKey,verifyOptions,(err)=>{
+                if(err){
+                    addLog("error auth...");
+                    addLog("Error al actualizar partida: "+idpartida);
+                }else{
+                    //Logica para tirar dados......!
+                    var decoded = jwt.decode(bearerToken, {complete: true});
+                    var exist=validateScope(decoded.payload.scopes,'dados.tirar');
+                    if(exist){
+                        addLog("llamando servicio PARTIDAS...");
+                        llamarServicioPartidas(bearerToken,marcador,function(){
+                            addLog("Se ha actualizado partida: "+idpartida);
+                        }.bind(this));
+                    }
+                }  
+            });
+        }.bind(this));
     }
 }
 
@@ -398,15 +444,15 @@ function tirarDados(callback){
 }
 
 function llamarServicioAuth(callback) {
-    let objAuth = {'Authorization': 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8='};
+    //let objAuth = {'Authorization': 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8='};
     var optionsAuth = {
         host : ip_tokens,
-        path : '/token',
-        method : 'POST',
-        headers: objAuth
+        path : '/token?id=micro-juegos&secret=secret-juegos-micro',
+        method : 'POST'//,
+        //headers: objAuth
     };
     var bearerToken = "";
-    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> "+ip_tokens+"/getToken")
+    addLog("->>>>>>  Consumiendo servicio de dados -> POST -> "+ip_tokens+"/token?id=micro-juegos&secret=secret-juegos-micro")
     var reqAuth = http.request(optionsAuth, function(res) {
         addLog("statusCode: "+ res.statusCode);
         res.on('data', function(d) {
@@ -455,6 +501,7 @@ function llamarServicioTirar(bearerToken,callback){
         tiro.dadoa = Math.floor(Math.random() * 6) + 1;
         tiro.dadob = Math.floor(Math.random() * 6) + 1;
         console.error(e);
+        return callback();
     }.bind(this));
 }
 
