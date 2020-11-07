@@ -44,9 +44,20 @@ var router = express.Router();
 var path = require('path');
 var fs = require('fs');
 var jwt = require('jsonwebtoken');
+
+var http = require('http');
+var _ = require('lodash');
+var logger = fs.createWriteStream('./server/log.txt', {
+    flags: 'a' // 'a' means appending (old data will be preserved)
+});
+function addLog(newlog) {
+    logger.write(newlog + "\n");
+}
+
 var auth = require('../authToken');
 var http = require('http');
 var _ = require('lodash');
+
 var jugadores = new Array();
 //TODO ESTO ES PARA DESENCRIPTAR TOKENS QUE SOLICITAN CONSUMIR TUS SERVICIOS DE TU MICROSERVICIO
 var publicKey = fs.readFileSync('./server/routes/public.key', 'utf8');
@@ -78,7 +89,9 @@ router.get('/listaTorneos', function (req, res, next) { return __awaiter(void 0,
 router.post('/listaUsers', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var llave;
     return __generator(this, function (_a) {
+
         llave = req.body.llave1;
+
         console.log("llave: " + llave);
         axios.post('http://34.69.29.183:80/listajugadores', {
             llave: llave
@@ -99,6 +112,29 @@ router.post('/listaUsers', function (req, res, next) { return __awaiter(void 0, 
     });
 }); });
 router.get('/listaJuegos', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    var results, e_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, db.allJuegos()];
+            case 1:
+                results = _a.sent();
+                res.json(results);
+                return [3 /*break*/, 3];
+            case 2:
+                e_2 = _a.sent();
+                console.log(e_2);
+                res.sendStatus(500);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+//---------------- put partidas--------------------
+router.put('/partidas2/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     return __generator(this, function (_a) {
         axios.get('http://34.69.29.183:80/jugadores')
             .then(function (response) {
@@ -111,20 +147,26 @@ router.get('/listaJuegos', function (req, res, next) { return __awaiter(void 0, 
 }); });
 //---------------- put partidas--------------------
 router.put('/partidas/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
     var idpartida, punteo;
     return __generator(this, function (_a) {
         try {
             idpartida = req.params.id;
-            punteo = req.body.punteo;
+
+            punteo = req.body.marcador;
+
+
             if (punteo[0] > punteo[1]) {
                 console.log("jugador 1 ganador");
                 db.setPunteo(idpartida, punteo[0], punteo[1]);
                 db.getGanador(idpartida, "1");
+
             }
             else if (punteo[0] < punteo[1]) {
                 console.log("jugador 2 ganador");
                 db.setPunteo(idpartida, punteo[0], punteo[1]);
                 db.getGanador(idpartida, "2");
+
             }
             res.json({
                 201: "partida lista",
@@ -138,14 +180,60 @@ router.put('/partidas/:id', function (req, res, next) { return __awaiter(void 0,
         return [2 /*return*/];
     });
 }); });
+
+router.put('/partidas/:id', verifytoken, function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        jwt.verify(req.jwt, publicKey, verifyOptions, function (err) {
+
 router.put('/partidas2/:id', verifytoken, function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         jwt.verify(req.token, publicKey, verifyOptions, function (err) {
+
             if (err) {
                 //res.sendStatus(403);
                 res.send("error 403");
             }
             else {
+
+                var decoded = jwt.decode(req.jwt, { complete: true });
+                var exist = validateScope(decoded.payload.scopes, 'torneos.partida.put');
+                console.log(exist);
+                if (exist) {
+                    try {
+                        var idpartida = req.params.id;
+                        var punteo = req.body.marcador;
+                        if (punteo[0] > punteo[1]) {
+                            console.log("jugador 1 ganador");
+                            db.setPunteo(idpartida, punteo[0], punteo[1]);
+                            db.getGanador(idpartida, "1");
+                            addLog("Partida terminada:" + idpartida + " ganador: jugador 1 (local).\n");
+                        }
+                        else if (punteo[0] < punteo[1]) {
+                            console.log("jugador 2 ganador");
+                            db.setPunteo(idpartida, punteo[0], punteo[1]);
+                            db.getGanador(idpartida, "2");
+                            addLog("Partida terminada:" + idpartida + " ganador: jugador 2 (visitante).\n");
+                        }
+                        res.json({
+                            201: "partida lista",
+                            "partida": idpartida
+                        });
+                    }
+                    catch (e) {
+                        console.log(e);
+                        res.sendStatus(500);
+                    }
+                    //res.send(respuesta);
+                    res.json({
+                        header: decoded.header,
+                        payload: decoded.payload,
+                        mensaje: "post fue recibido"
+                    });
+                }
+                else {
+                    res.sendStatus(403);
+                }
+
                 var decoded = jwt.decode(req.token, { complete: true });
                 try {
                     var idpartida = req.params.id;
@@ -175,13 +263,18 @@ router.put('/partidas2/:id', verifytoken, function (req, res, next) { return __a
                     payload: decoded.payload,
                     mensaje: "post fue recibido"
                 });
+
             }
         });
         return [2 /*return*/];
     });
 }); });
 router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    var results, e_3;
+
     var results, e_2;
+
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -193,8 +286,13 @@ router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, vo
                 res.json(results);
                 return [3 /*break*/, 3];
             case 2:
+
+                e_3 = _a.sent();
+                console.log(e_3);
+
                 e_2 = _a.sent();
                 console.log(e_2);
+
                 res.sendStatus(500);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
@@ -204,16 +302,54 @@ router.get('/getTorneo', function (req, res, next) { return __awaiter(void 0, vo
 //------------------delete torneo, users, juegos-------------------
 router.post('/deleteUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id1)
+
+        /*axios.delete('http://34.69.29.183:80/jugadores/'+req.body.id1)
+        .then(function(response:AxiosResponse){
+            res.send(res.json(response.data));
+        }).catch(function(e:AxiosError){
+            res.send(e.message);
+        });*/
+        funcionBorrar(req, res, function () {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    return [2 /*return*/];
+                });
+            });
+        }.bind(this));
+      axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id1)
             .then(function (response) {
             res.send(res.json(response.data));
         })["catch"](function (e) {
             res.send(e.message);
         });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/deleteJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    var results, e_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, db.borrarJuego(req.params.id)];
+            case 1:
+                results = _a.sent();
+                res.json(results);
+                return [3 /*break*/, 3];
+            case 2:
+                e_4 = _a.sent();
+                console.log(e_4);
+                res.sendStatus(500);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var results, e_5;
+
     return __generator(this, function (_a) {
         axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id)
             .then(function (response) {
@@ -226,6 +362,7 @@ router.post('/deleteJuego', function (req, res, next) { return __awaiter(void 0,
 }); });
 router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var results, e_3;
+
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -236,8 +373,13 @@ router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, vo
                 res.json(results);
                 return [3 /*break*/, 3];
             case 2:
+
+                e_5 = _a.sent();
+                console.log(e_5);
+
                 e_3 = _a.sent();
                 console.log(e_3);
+
                 res.sendStatus(500);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
@@ -247,22 +389,60 @@ router["delete"]('/:id', function (req, res, next) { return __awaiter(void 0, vo
 //-------------------------inserts torneo, users, juego-----------------
 router.post('/insertUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        axios.post('http://34.69.29.183:80/jugadores', {
+
             nombres: req.body.nombres1,
             apellidos: req.body.apellidos1,
             correo: req.body.correo1,
             password: req.body.password1,
             administrador: req.body.administrador1
         })
+
+        .then(function(response:AxiosResponse){
+            res.send(res.json(response.data));
+        }).catch(function(e:AxiosError){
+            res.send(e.message);
+        });*/
+        funcionInsertar(req, res, function () {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    return [2 /*return*/];
+                });
+            });
+        }.bind(this));
+
             .then(function (response) {
             res.send(res.json(response.data));
         })["catch"](function (e) {
             res.send(e.message);
         });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/insertJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    var results, e_6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("insert juego " + req.body.nombre);
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, db.insertarJuego(req.body.nombre, req.body.url)];
+            case 2:
+                results = _a.sent();
+                res.json(results);
+                addLog("juego insertardo:" + req.body.nombre + " url: " + req.body.url + "\n");
+                return [3 /*break*/, 4];
+            case 3:
+                e_6 = _a.sent();
+                console.log(e_6);
+                res.sendStatus(500);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+
     return __generator(this, function (_a) {
         axios.post('http://34.69.29.183:80/jugadores', {
             nombres: req.body.nombres,
@@ -277,13 +457,20 @@ router.post('/insertJuego', function (req, res, next) { return __awaiter(void 0,
             res.send(e.message);
         });
         return [2 /*return*/];
+
     });
 }); });
 router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
+
+        funcionLista(req, res, function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var matriz, json, llave, cantidadj, idtorneo, arreglopartidas, a, b, partidas, i, idpartida, llave, i, idpartida, llave, i, x, j, e_7;
+
         funcionLista(function () {
             return __awaiter(this, void 0, void 0, function () {
                 var matriz, json, llave, cantidadj, idtorneo, arreglopartidas, a, b, partidas, i, idpartida, llave, i, idpartida, llave, i, x, j, e_4;
+
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -295,9 +482,14 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             llave = req.body.llave1;
                             console.log("llave: " + llave);
                             cantidadj = jugadores.length;
+
+                            if (!(cantidadj % 2 == 0)) return [3 /*break*/, 14];
+                            //console.log("entro al if");
+
                             console.log("talegueo");
                             if (!(cantidadj % 2 == 0)) return [3 /*break*/, 14];
                             console.log("entro al if");
+
                             console.log("cantidad jugadores: " + cantidadj);
                             return [4 /*yield*/, db.insertar(req.body.nombre, req.body.llave1, req.body.url, req.body.idjuego)];
                         case 2:
@@ -338,7 +530,7 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             _a.label = 9;
                         case 9:
                             if (!(i < partidas)) return [3 /*break*/, 13];
-                            console.log("while idpartida:" + idpartida);
+
                             return [4 /*yield*/, db.insertarPartida(idtorneo)];
                         case 10:
                             idpartida = _a.sent();
@@ -358,17 +550,29 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
                             for (i = 1; i < matriz.length; i++) {
                                 x = 0;
                                 for (j = 0; j < matriz[i].length; j++) {
+
+
                                     console.log("esto tiene la matriz" + matriz);
+
                                     db.controlTorneo(matriz[i][j], matriz[i - 1][x], matriz[i - 1][x + 1]);
                                     x += 2;
                                 }
                             }
                             json = { "estado": 201, "torneo": idtorneo, "partidas": matriz };
                             res.json(json);
+
+                            fs.appendFile('./proyectosa/log.txt', "Torneo Creado:" + idtorneo + " Partidas:" + matriz.length + ".\n", function () { });
+                            addLog("torneo insertardo:" + idtorneo + " partidas: " + matriz.length + "\n");
+                            return [3 /*break*/, 16];
+                        case 15:
+                            e_7 = _a.sent();
+                            console.log(e_7);
+
                             return [3 /*break*/, 16];
                         case 15:
                             e_4 = _a.sent();
                             console.log(e_4);
+
                             res.sendStatus(500);
                             return [3 /*break*/, 16];
                         case 16: return [2 /*return*/];
@@ -382,23 +586,90 @@ router.post('/insertarTorneo', function (req, res, next) { return __awaiter(void
 //-------------------update------------------
 router.post('/updateUser', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
+
+        /*console.log("id: "+req.body.id1);
+        axios.put('http://34.69.29.183:80/jugadores/'+req.body.id1,{
+
         console.log("id: " + req.body.id1);
         axios.put('http://34.69.29.183:80/jugadores/' + req.body.id1, {
+
             nombres: req.body.nombres1,
             apellidos: req.body.apellidos1,
             correo: req.body.correo1,
             password: req.body.password1,
             administrador: req.body.administrador1
         })
+
+        .then(function(response:AxiosResponse){
+            res.send(res.json(response.data));
+        }).catch(function(e:AxiosError){
+            res.send(e.message);
+        });*/
+        funcionUpdate(req, res, function () {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    return [2 /*return*/];
+                });
+            });
+        }.bind(this));
+
             .then(function (response) {
             res.send(res.json(response.data));
         })["catch"](function (e) {
             res.send(e.message);
         });
+
         return [2 /*return*/];
     });
 }); });
 router.post('/updateJuego', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+
+    var results, e_8;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, db.updateJuego(req.params.id)];
+            case 1:
+                results = _a.sent();
+                res.json(results);
+                return [3 /*break*/, 3];
+            case 2:
+                e_8 = _a.sent();
+                console.log(e_8);
+                res.sendStatus(500);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+//------------------------login--------------------
+router.post('/login', function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        /*var correo = req.body.correo;
+        var password = req.body.password;
+        var a = await axios.get('http://34.69.29.183:80/login',{
+            
+            correo: req.body.correo1,
+            password: req.body.password1,
+            
+        })
+        .then(function(response:AxiosResponse){
+            res.send(res.json(response.data));
+        }).catch(function(e:AxiosError){
+            res.send(e.message);
+        });*/
+        funcionLogin(req, res, function () {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    return [2 /*return*/];
+                });
+            });
+        }.bind(this));
+        return [2 /*return*/];
+    });
+}); });
+
     return __generator(this, function (_a) {
         axios.put('http://34.69.29.183:80/jugadores/:' + req.body.id1, {
             nombres: req.body.nombres1,
@@ -438,6 +709,7 @@ router.post('/login', function (req, res, next) { return __awaiter(void 0, void 
         }
     });
 }); });
+
 //--------------------pedir token---------------
 /*(function() {
     var token:String = 'Basic bWljcm8tanVlZ29zOnNlY3JldC1qdWVnb3MtbWljcm8=';
@@ -472,23 +744,179 @@ router.post('/token', function (req, res, next) { return __awaiter(void 0, void 
     });
 }); });
 // Authorization: Bearer <token>
+
+router.post("/generar", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        axios.post('http://35.223.103.13:3000/generar', {
+            id: req.body.id,
+            jugadores: req.body.jugadores
+        }).then(function (response) {
+            res.send(JSON.stringify(response.data));
+        })["catch"](function (error) {
+            res.send(error.message);
+        });
+        return [2 /*return*/];
+    });
+}); });
+router.post("/simular", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        axios.post('http://35.223.103.13:3000/simular', {
+            id: req.body.id,
+            jugadores: req.body.jugadores
+        }).then(function (response) {
+            res.send(JSON.stringify(response.data));
+        })["catch"](function (error) {
+            res.send(error.message);
+        });
+        return [2 /*return*/];
+    });
+}); });
+function validateScope(scopes, idruta) {
+    var result = false;
+    /*scopes.forEach(
+        
+        element => (element==idruta)? true: false
+    
+    );*/
+    scopes.forEach(function (word) {
+        console.log(word);
+        console.log(idruta);
+        if (word === idruta) {
+            console.log(true);
+            result = true;
+        }
+    });
+    return result;
+}
+
 function verifytoken(req, res, next) {
     var bearerHeader = req.headers['authorization'];
     if (typeof bearerHeader !== 'undefined') {
         var bearerToken = bearerHeader.split(" ")[1];
-        req.token = bearerToken;
+
+        req.jwt = bearerToken;
+
         next();
     }
     else {
         res.sendStatus(403); //ruta o acceso prohibido
     }
 }
+
+function funcionLista(req, res, callback) {
+    listarUsuarios(req, res, function () {
+        return callback();
+    }.bind(this));
+}
+function funcionInsertar(req, res, callback) {
+    insertarUsuario(req, res, function () {
+        return callback();
+    }.bind(this));
+}
+function funcionUpdate(req, res, callback) {
+    updateUsuario(req, res, function () {
+        return callback();
+    }.bind(this));
+}
+function funcionBorrar(req, res, callback) {
+    deleteUsuario(req, res, function () {
+        return callback();
+    }.bind(this));
+}
+function funcionLogin(req, res, callback) {
+    loginUsuario(req, res, function () {
+        return callback();
+    }.bind(this));
+}
+function insertarUsuario(req, res, callback) {
+    console.log("verificar auth...");
+    llamarServicioAuth(function (bearerToken) {
+        var _this = this;
+        //console.log(bearerToken);
+        jwt.verify(bearerToken, publicKey, verifyOptions, function (err) {
+            if (err) {
+                console.log("error auth...");
+                return callback();
+            }
+            else {
+                //Logica para tirar dados......!
+                console.log("llamando servicio insertar...");
+                llamarServicioInsertar(req, res, bearerToken, function () {
+                    return callback();
+                }.bind(_this));
+            }
+        });
+    }.bind(this));
+}
+function updateUsuario(req, res, callback) {
+    console.log("verificar auth...");
+    llamarServicioAuth(function (bearerToken) {
+        var _this = this;
+        //console.log(bearerToken);
+        jwt.verify(bearerToken, publicKey, verifyOptions, function (err) {
+            if (err) {
+                console.log("error auth...");
+                return callback();
+            }
+            else {
+                //Logica para tirar dados......!
+                console.log("llamando servicio update...");
+                llamarServicioUpdate(req, res, bearerToken, function () {
+                    return callback();
+                }.bind(_this));
+            }
+        });
+    }.bind(this));
+}
+function deleteUsuario(req, res, callback) {
+    console.log("verificar auth...");
+    llamarServicioAuth(function (bearerToken) {
+        var _this = this;
+        //console.log(bearerToken);
+        jwt.verify(bearerToken, publicKey, verifyOptions, function (err) {
+            if (err) {
+                console.log("error auth...");
+                return callback();
+            }
+            else {
+                //Logica para tirar dados......!
+                console.log("llamando servicio delete...");
+                llamarServicioDelete(req, res, bearerToken, function () {
+                    return callback();
+                }.bind(_this));
+            }
+        });
+    }.bind(this));
+}
+function loginUsuario(req, res, callback) {
+    console.log("verificar auth...");
+    llamarServicioAuth(function (bearerToken) {
+        var _this = this;
+        //console.log(bearerToken);
+        jwt.verify(bearerToken, publicKey, verifyOptions, function (err) {
+            if (err) {
+                console.log("error auth...");
+                return callback();
+            }
+            else {
+                //Logica para tirar dados......!
+                console.log("llamando servicio login...");
+                llamarServicioLogin(req, res, bearerToken, function () {
+                    return callback();
+                }.bind(_this));
+            }
+        });
+    }.bind(this));
+}
+function listarUsuarios(req, res, callback) {
+
 function funcionLista(callback) {
     listarUsuarios(function () {
         return callback();
     }.bind(this));
 }
 function listarUsuarios(callback) {
+
     console.log("verificar auth...");
     llamarServicioAuth(function (bearerToken) {
         var _this = this;
@@ -501,7 +929,9 @@ function listarUsuarios(callback) {
             else {
                 //Logica para tirar dados......!
                 console.log("llamando servicio listar...");
-                llamarServicioListar(bearerToken, function () {
+
+                llamarServicioListar(req, res, bearerToken, function () {
+
                     return callback();
                 }.bind(_this));
             }
@@ -524,13 +954,28 @@ function llamarServicioAuth(callback) {
             //console.info('POST result:'+d+'\n');
             //process.stdout.write(d+'\n');
             var data = JSON.parse(d);
-            bearerToken = data.token;
+
+            bearerToken = data.jwt;
             console.log("token: " + bearerToken);
+            addLog("autenticación de token" + bearerToken + "\n");
+
             return callback(bearerToken);
         });
     }.bind(this));
     reqAuth.end();
 }
+
+function llamarServicioListar(req, res, bearerToken, callback) {
+    var j = axios.post('http://34.69.29.183:80/listajugadores', {
+        llave: req.body.llave1
+    }, {
+        headers: {
+            'Authorization': "Bearer " + bearerToken
+        }
+    })
+        .then(function (response) {
+        console.log("->>>>>>  Consumiendo servicio de jugadores -> POST -> http://34.69.29.183:80/jugadores");
+
 function llamarServicioListar(bearerToken, callback) {
     var objAuth = { 'Authorization': 'Bearer ' + bearerToken };
     var llave = { 'llave': '2' };
@@ -550,10 +995,99 @@ function llamarServicioListar(bearerToken, callback) {
     })
         .then(function (response) {
         console.log("->>>>>>  Consumiendo servicio de jugadores -> POST -> http://34.69.29.183:80/listajugadores");
+
         for (var i = 0; i < response.data.rows.length; i++) {
             console.log("id: " + response.data.rows[i].id);
             jugadores.push(Number(response.data.rows[i].id));
         }
+
+        //res.send(res.json(response.data));
+        console.log("jugadores: " + jugadores.length);
+        addLog("llamada servicio jugadores\n");
+        return callback(jugadores);
+    })["catch"](function (e) {
+        res.send(e.message);
+    });
+}
+function llamarServicioInsertar(req, res, bearerToken, callback) {
+    console.log("llamar servicio insertar");
+    axios.post('http://34.69.29.183:80/jugadores', {
+        nombres: req.body.nombres1,
+        apellidos: req.body.apellidos1,
+        correo: req.body.correo1,
+        password: req.body.password1,
+        administrador: req.body.administrador1
+    }, {
+        headers: {
+            'Authorization': "Bearer " + bearerToken
+        }
+    })
+        .then(function (response) {
+        res.send(res.json(response.data));
+        console.log("si inserto");
+        addLog("llamada a servicio insertar http://34.69.29.183:80/jugadores " + res.json(response.data) + "\n");
+        return callback();
+    })["catch"](function (e) {
+        res.send(e.message);
+    });
+}
+function llamarServicioUpdate(req, res, bearerToken, callback) {
+    console.log("llamar servicio update");
+    axios.put('http://34.69.29.183:80/jugadores/' + req.body.id1, {
+        nombres: req.body.nombres1,
+        apellidos: req.body.apellidos1,
+        correo: req.body.correo1,
+        password: req.body.password1,
+        administrador: req.body.administrador1
+    }, {
+        headers: {
+            'Authorization': "Bearer " + bearerToken
+        }
+    })
+        .then(function (response) {
+        res.send(res.json(response.data));
+        console.log("si update");
+        addLog("llamada a servicio update http://34.69.29.183:80/jugadores/id " + res.json(response.data) + "\n");
+        return callback();
+    })["catch"](function (e) {
+        res.send(e.message);
+    });
+}
+function llamarServicioDelete(req, res, bearerToken, callback) {
+    console.log("llamar servicio delete");
+    axios["delete"]('http://34.69.29.183:80/jugadores/' + req.body.id1, {
+        headers: {
+            'Authorization': "Bearer " + bearerToken
+        }
+    })
+        .then(function (response) {
+        res.send(res.json(response.data));
+        console.log("si delete");
+        addLog("llamada a servicio borrar http://34.69.29.183:80/jugadores/id" + res.json(response.data) + "\n");
+        return callback();
+    })["catch"](function (e) {
+        res.send(e.message);
+    });
+}
+function llamarServicioLogin(req, res, bearerToken, callback) {
+    console.log("llamar servicio login");
+    axios.post('http://34.69.29.183:80/login', {
+        correo: req.body.correo1,
+        password: req.body.password1
+    }, {
+        headers: {
+            'Authorization': "Bearer " + bearerToken
+        }
+    })
+        .then(function (response) {
+        res.send(res.json(response.data));
+        console.log("si login");
+        addLog("llamada a servicio login http://34.69.29.183:80/login " + res.json(response.data) + "\n");
+        return callback();
+    })["catch"](function (e) {
+        res.send(e.message);
+    });
+
         console.log("jugadores: " + jugadores.length);
         return callback(jugadores);
         //res.send(res.json(response.data));
@@ -578,5 +1112,6 @@ function llamarServicioListar(bearerToken, callback) {
        
         console.error(e);
     }.bind(this));*/
+
 }
 module.exports = router;
