@@ -1,0 +1,40 @@
+version: '3.3'
+
+services:
+
+   db-micro:
+     container_name: db-micro
+     image: mysql:5.7
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: root
+       MYSQL_DATABASE: projectsa
+       MYSQL_USER: root
+       MYSQL_PASSWORD: root
+     volumes:
+       - type: volume
+         source: db_persistent_data
+         target: /var/lib/mysql
+         volume:
+          nocopy: true
+
+          
+   server-tokens:
+     container_name: server-tokens
+     build:
+       context: ./server-tokens
+     restart: always
+     ports:       
+       - 80:8080
+     volumes:
+       - type: bind
+         source: ./server-tokens/src
+         target: /usr/src/app/src
+       - type: bind
+         source: ./server-tokens/dist
+         target: /usr/src/app/dist
+     command: bash -c "gulp uglify && npm run start"
+
+volumes:
+    db_persistent_data:
+      driver: local
