@@ -34,11 +34,6 @@ function getRandomInt() {
 function validateScope(scopes,idruta)
 {
     var result=false;
-    /*scopes.forEach(
-        
-        element => (element==idruta)? true: false
-    
-    );*/
     scopes.forEach(function(word) {
         console.log(word);
         console.log(idruta);
@@ -56,16 +51,9 @@ app.route('/tirar/:id')
 
         jwt.verify(req.jwt,publicKey,verifyOptions,(err)=>{
             if(err){
-                //respuesta.error=true
-                //respuesta.codigo=403
-               // respuesta.datos=-1
-                //respuesta.cantidad=-1
                 res.sendStatus(403);
-                //res.send(respuesta);
             }else{
                 var decoded = jwt.decode(req.jwt, {complete: true});
-
-                //console.log(decoded.payload.scopes);
                 var exist=validateScope(decoded.payload.scopes,'dados.tirar');
                 console.log(exist);
                 if(exist){
@@ -93,30 +81,9 @@ app.route('/tirar/:id')
                     res.sendStatus(403)
                 }
 
-
-
-
-               /* res.json({
-                    mensaje: "post fue recibido",
-                    dados: req.params.id,
-                    authData: authData
-                });*/
             }
         });
 
-        /*var numDados=parseInt(req.params.id)
-        console.log('Tirando '+numDados+' dados...');
-
-        var cadena=[]    
-        for (var i = 0; i < numDados; i++) {
-            cadena.push(getRandomInt())
-        }    
-        
-        respuesta.cantidad= numDados
-        respuesta.dados= cadena
-            
-
-        res.send(respuesta);*/
     })
 
 

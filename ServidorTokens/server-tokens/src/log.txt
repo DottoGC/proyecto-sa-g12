@@ -1,0 +1,29 @@
+Servidor de Tokens, listening on port 8080!
+Usuario que esta pidiendo un token.micro-juegos,secret-juegos-micro
+>> Servidor de Tokens, listening on port 8080!
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>> Scopes del usuario: dados.tirar,torneos.partida.put,usuarios.jugadores.get,usuarios.login
+>> Token que se enviara: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZXMiOlsiZGFkb3MudGlyYXIiLCJ0b3JuZW9zLnBhcnRpZGEucHV0IiwidXN1YXJpb3MuanVnYWRvcmVzLmdldCIsInVzdWFyaW9zLmxvZ2luIl0sImlhdCI6MTYwNDc1NTk1NywiZXhwIjoxNjA0NzU2MDE3fQ.D89fVxqad9HJQzPzFBRrU_SzXp6lndls48DuGHDf_K-qnd2GSWkUHwOP3wZD9RXRrQ8W7gzhL4yiLsIv8dIM5aKCxYCevx-IlAMRqjMOSoeCAGAVURMzKkbrxKEDQNSeKjvLmCTgmu6_0nZgYWbTOOiBaLWRfyF6rjOWzdalcJA
+>> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>>
+>> Scopes del usuario: dados.tirar,torneos.partida.put,usuarios.jugadores.get,usuarios.login
+>> Token que se enviara: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZXMiOlsiZGFkb3MudGlyYXIiLCJ0b3JuZW9zLnBhcnRpZGEucHV0IiwidXN1YXJpb3MuanVnYWRvcmVzLmdldCIsInVzdWFyaW9zLmxvZ2luIl0sImlhdCI6MTYwNDc1Njc5MSwiZXhwIjoxNjA0NzU2ODUxfQ.TiMjZA_pSmZIq8SFyew6mKwMTm4ayn6EGjySqRqDX0TcFBWUC03T37V424hf4OvHJSRZ6er723n2zp5VL8y2DaPS2CCe_VlcLzqqsYge1bhioAcKXQkLGBqIvy53LLWoEGgb_dxu36ETHC9PaBC-Cx2UXCeHg0lVTh7MoGUmC6E
+>> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>> Scopes del usuario: dados.tirar,torneos.partida.put,usuarios.jugadores.get,usuarios.login
+>> Token que se enviara: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZXMiOlsiZGFkb3MudGlyYXIiLCJ0b3JuZW9zLnBhcnRpZGEucHV0IiwidXN1YXJpb3MuanVnYWRvcmVzLmdldCIsInVzdWFyaW9zLmxvZ2luIl0sImlhdCI6MTYwNDc1Njk3MiwiZXhwIjoxNjA0NzU3MDMyfQ.OemhgtaV3JCnB1idua5FWW14FXcrYv5WTSWwfpzcbNzZn50hjJCnm1_y82g0yGCWYyp0aj7QsE2ORUOCc_eWEmCUuLCyyYfPtTM2Zr-Vc011aCZniUO79-YqJ_Oa_50AI-nYnfy4WH1KrvpXmWWKcIj-8TwjY8ko1IFtM8rtM5c
+>>
+>> Usuario que esta pidiendo un token: micro-juegos,secret-juegos-micro
+>> Scopes del usuario: dados.tirar,torneos.partida.put,usuarios.jugadores.get,usuarios.login
+>> Token que se enviara: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZXMiOlsiZGFkb3MudGlyYXIiLCJ0b3JuZW9zLnBhcnRpZGEucHV0IiwidXN1YXJpb3MuanVnYWRvcmVzLmdldCIsInVzdWFyaW9zLmxvZ2luIl0sImlhdCI6MTYwNDc1Njk5MSwiZXhwIjoxNjA0NzU3MDUxfQ.VHa47Z45iZVrBk1q5xkTdMAJvBXYLSw5hgIKuJVyafMIyTYqX4LZjiyetKMdNmg2xbdXnddt0keMhoROp-dAqEaErD1L79oh7tfkxQkyGHxu7jR8v9IZ_s6jshU4WHq3o16VnUa2R7lYk6dhPU0cL-X0IKj8A57Vz0LsIbHUoyc
+>>
+2020-11-7 - >> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+2020-11-7 14:1:6 - >> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+2020-11-7 17:10:14 - >> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+2020-11-7 17:18:34 - >> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
+2020-11-7 17:21:10 - >> Servidor de Tokens, listening on port 8080 in docker and 80 in vm!
