@@ -78,12 +78,41 @@ export class AppComponent implements OnInit{
     );
   }
 
-  actionNewGame(){
+
+  actionNewGameAuth(){
+    this.gameService.getAuth()
+    .subscribe(
+      data => {// Success
+        //console.log(data);
+        //alert('Contacto creado!');
+        this.actionNewGame(data["jwt"]);
+      },
+      (error) => {
+        console.error(error);
+      }
+    );
+  }
+
+  actionNewGame(token){
     console.log("New Game...");
-    this.newGameStart(function(){
+    this.newGameStart(token,function(){
       this.lstnewGameInfo();
     }.bind(this));
 
+  }
+
+  actionNewSimAuth(){
+    this.gameService.getAuth()
+    .subscribe(
+      data => {// Success
+        //console.log(data);
+        //alert('Contacto creado!');
+        this.actionNewFullSim(data["jwt"]);
+      },
+      (error) => {
+        console.error(error);
+      }
+    );
   }
 
   actionNewSim(){
@@ -93,9 +122,9 @@ export class AppComponent implements OnInit{
     }.bind(this));
   }
 
-  async actionNewFullSim(){
+  async actionNewFullSim(jwttoken){
     console.log("Full Simulation...");
-    this.newGameFullSimulation(function(){
+    this.newGameFullSimulation(jwttoken,function(){
       this.lstGameInfo();
     }.bind(this));
   }
@@ -125,10 +154,10 @@ export class AppComponent implements OnInit{
     );
   }
 
-  newGameFullSimulation(callback){
+  newGameFullSimulation(jwttoken,callback){
     this.ganador = "";
     this.turno = 0;
-    this.gameService.newFullSimulation()
+    this.gameService.newFullSimulation(jwttoken)
     .subscribe(
       result => {
         console.log(result);
@@ -144,11 +173,11 @@ export class AppComponent implements OnInit{
     );
   }
 
-  newGameStart(callback){
+  newGameStart(token,callback){
     console.log("New Game starting...");
     this.ganador = "";
     this.turno = 0;
-    this.gameService.newGame()
+    this.gameService.newGame(token)
     .subscribe(
       result => {
         console.log("resultado...");
